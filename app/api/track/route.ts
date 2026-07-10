@@ -43,8 +43,10 @@ export async function POST(req: NextRequest) {
 
     const author = typeof body?.author === "string" ? body.author.slice(0, 120) : null;
     const message = typeof body?.message === "string" ? body.message.slice(0, 300) : null;
+    const region = typeof body?.region === "string" ? body.region.slice(0, 60) : null;
+    const category = typeof body?.category === "string" ? body.category.slice(0, 60) : null;
 
-    await recordHit(domain, author, message);
+    await recordHit(domain, author, message, region, category);
     return NextResponse.json({ ok: true }, { headers: CORS });
   } catch (err) {
     console.error("[track] error", err);

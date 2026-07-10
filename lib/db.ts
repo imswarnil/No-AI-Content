@@ -31,11 +31,16 @@ export async function ensureSchema(): Promise<void> {
       domain     TEXT PRIMARY KEY,
       author     TEXT,
       message    TEXT,
+      region     TEXT,
+      category   TEXT,
       first_seen TIMESTAMPTZ NOT NULL DEFAULT now(),
       last_seen  TIMESTAMPTZ NOT NULL DEFAULT now(),
       hits       BIGINT NOT NULL DEFAULT 0
     )
   `;
+  // Add columns for instances created before region/category existed.
+  await sql`ALTER TABLE sites ADD COLUMN IF NOT EXISTS region TEXT`;
+  await sql`ALTER TABLE sites ADD COLUMN IF NOT EXISTS category TEXT`;
   schemaReady = true;
 }
 
@@ -43,6 +48,8 @@ export type SiteRow = {
   domain: string;
   author: string | null;
   message: string | null;
+  region: string | null;
+  category: string | null;
   first_seen: string;
   last_seen: string;
   hits: string; // BIGINT comes back as a string
@@ -53,16 +60,20 @@ export async function recordHit(
   domain: string,
   author: string | null,
   message: string | null,
+  region: string | null = null,
+  category: string | null = null,
 ): Promise<void> {
   await ensureSchema();
   await sql`
-    INSERT INTO sites (domain, author, message, hits)
-    VALUES (${domain}, ${author}, ${message}, 1)
+    INSERT INTO sites (domain, author, message, region, category, hits)
+    VALUES (${domain}, ${author}, ${message}, ${region}, ${category}, 1)
     ON CONFLICT (domain) DO UPDATE
       SET last_seen = now(),
           hits      = sites.hits + 1,
           author    = COALESCE(EXCLUDED.author, sites.author),
-          message   = COALESCE(EXCLUDED.message, sites.message)
+          message   = COALESCE(EXCLUDED.message, sites.message),
+          region    = COALESCE(EXCLUDED.region, sites.region),
+          category  = COALESCE(EXCLUDED.category, sites.category)
   `;
 }
 
@@ -70,7 +81,7 @@ export async function recordHit(
 export async function listSites(): Promise<SiteRow[]> {
   await ensureSchema();
   const rows = await sql`
-    SELECT domain, author, message, first_seen, last_seen, hits
+    SELECT domain, author, message, region, category, first_seen, last_seen, hits
     FROM sites
     ORDER BY last_seen DESC
   `;

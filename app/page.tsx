@@ -1,16 +1,33 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import StoryModal from "./StoryModal";
+
+type Style = "stamp" | "banner" | "compact";
+
+const PRESETS = [
+  "Written by a human. AI is used only to refine ideas — never to generate.",
+  "100% human-written. No AI-generated text.",
+  "The words are mine. AI helps me edit, not write.",
+  "Human-first writing. AI assists — the human decides.",
+];
+
+const STYLES: { key: Style; name: string; blurb: string }[] = [
+  { key: "stamp", name: "Notary stamp", blurb: "The signature seal — for sidebars" },
+  { key: "banner", name: "Banner", blurb: "Best for footers / about pages" },
+  { key: "compact", name: "Compact pill", blurb: "Best for inline / bylines" },
+];
 
 export default function Home() {
   const [author, setAuthor] = useState("");
-  const [message, setMessage] = useState(
-    "This content is written by a human. No AI-generated content.",
-  );
+  const [message, setMessage] = useState(PRESETS[0]);
   const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [style, setStyle] = useState<Style>("stamp");
+  const [region, setRegion] = useState("");
+  const [category, setCategory] = useState("");
   const [origin, setOrigin] = useState("");
   const [copied, setCopied] = useState(false);
-  const previewRef = useRef<HTMLDivElement>(null);
+  const [storyOpen, setStoryOpen] = useState(false);
 
   useEffect(() => {
     setOrigin(window.location.origin);
@@ -21,91 +38,251 @@ export default function Home() {
       `src="${origin}/widget.js"`,
       author ? `data-author="${escapeAttr(author)}"` : "",
       `data-message="${escapeAttr(message)}"`,
+      `data-style="${style}"`,
       `data-theme="${theme}"`,
+      region ? `data-region="${escapeAttr(region)}"` : "",
+      category ? `data-category="${escapeAttr(category)}"` : "",
       "async",
     ]
       .filter(Boolean)
       .join("\n  ");
     return `<script\n  ${attrs}\n></script>`;
-  }, [origin, author, message, theme]);
-
-  // Live preview: re-render the actual widget whenever inputs change.
-  useEffect(() => {
-    const el = previewRef.current;
-    if (!el || !origin) return;
-    el.innerHTML = "";
-    const s = document.createElement("script");
-    s.src = `${origin}/widget.js`;
-    if (author) s.setAttribute("data-author", author);
-    s.setAttribute("data-message", message);
-    s.setAttribute("data-theme", theme);
-    s.setAttribute("data-preview", "1"); // widget still tracks; that's fine for your own domain
-    el.appendChild(s);
-  }, [origin, author, message, theme]);
+  }, [origin, author, message, style, theme, region, category]);
 
   async function copy() {
     await navigator.clipboard.writeText(embedCode);
     setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
+    setTimeout(() => setCopied(false), 1600);
   }
 
   return (
-    <main className="container">
-      <div className="hero">
-        <h1>🌱 No AI Content</h1>
-        <p>
-          A free, open-source badge that lets authors publicly declare their work is
-          human-written. Customize it, copy the snippet, and paste it on your site.
-        </p>
-        <p className="muted">
-          Privacy-friendly: the badge only records the <strong>domain</strong> it runs on —
-          no visitor tracking, no cookies, no personal data.
-        </p>
-      </div>
-
-      <div className="card">
-        <h2>1. Customize your badge</h2>
-        <div className="row">
-          <div>
-            <label>Author / brand name (optional)</label>
-            <input
-              value={author}
-              onChange={(e) => setAuthor(e.target.value)}
-              placeholder="Jane Doe"
-            />
+    <main>
+      {/* ---------- HERO ---------- */}
+      <section className="hero">
+        <div className="hero-inner">
+          <span className="pill-tag">🌱 Open source · Free forever</span>
+          <h1>
+            Real writing by <span className="grad">real humans</span>.
+          </h1>
+          <p className="lede">
+            A badge for blogs written by a person — not generated end-to-end by a machine.
+            Add it to your sidebar to tell readers your ideas and words are yours.
+          </p>
+          <div className="hero-cta">
+            <a className="btn lg" href="#build">
+              Create your stamp
+            </a>
+            <button className="btn lg ghost" onClick={() => setStoryOpen(true)}>
+              ▶ What is this?
+            </button>
+            <a className="btn lg ghost" href="/directory">
+              See who uses it →
+            </a>
           </div>
-          <div>
-            <label>Theme</label>
-            <select value={theme} onChange={(e) => setTheme(e.target.value as "light" | "dark")}>
-              <option value="light">Light</option>
-              <option value="dark">Dark</option>
+          <p className="manifesto">
+            I miss the old web — blogs where a human actually thought and wrote. Using AI to
+            sharpen a sentence or pressure-test an idea is fine. Publishing a soulless,
+            end-to-end AI-generated post as your own is not. This badge is a small, honest
+            signal that a person is still behind the words.
+          </p>
+        </div>
+      </section>
+
+      {/* ---------- STYLES SHOWCASE ---------- */}
+      <section id="styles" className="section">
+        <h2 className="sec-title">Three styles, one honest signal</h2>
+        <p className="sec-sub">Pick whichever fits where you want it. All are customizable.</p>
+        <div className="showcase">
+          {STYLES.map((s) => (
+            <div className="showcase-card" key={s.key}>
+              <WidgetPreview origin={origin} style={s.key} theme={theme} author={author} message={message} />
+              <div className="showcase-meta">
+                <strong>{s.name}</strong>
+                <span>{s.blurb}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ---------- BUILDER ---------- */}
+      <section id="build" className="section">
+        <h2 className="sec-title">Build your badge</h2>
+        <div className="builder">
+          <div className="card">
+            <label>Your name / brand (optional)</label>
+            <input value={author} onChange={(e) => setAuthor(e.target.value)} placeholder="Jane Doe" />
+
+            <label>What it says</label>
+            <select
+              value={PRESETS.includes(message) ? message : "__custom"}
+              onChange={(e) => e.target.value !== "__custom" && setMessage(e.target.value)}
+            >
+              {PRESETS.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+              <option value="__custom">Custom…</option>
             </select>
+            <textarea rows={2} value={message} onChange={(e) => setMessage(e.target.value)} />
+
+            <div className="row">
+              <div>
+                <label>Style</label>
+                <select value={style} onChange={(e) => setStyle(e.target.value as Style)}>
+                  {STYLES.map((s) => (
+                    <option key={s.key} value={s.key}>
+                      {s.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label>Theme</label>
+                <select value={theme} onChange={(e) => setTheme(e.target.value as "light" | "dark")}>
+                  <option value="light">Light</option>
+                  <option value="dark">Dark</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="row">
+              <div>
+                <label>Country / region (optional)</label>
+                <input
+                  value={region}
+                  onChange={(e) => setRegion(e.target.value)}
+                  placeholder="e.g. India"
+                />
+              </div>
+              <div>
+                <label>Category (optional)</label>
+                <input
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  placeholder="e.g. Tech, Travel, Personal"
+                />
+              </div>
+            </div>
+            <p className="muted" style={{ fontSize: 12, marginTop: 10 }}>
+              Region &amp; category help readers find you in the{" "}
+              <a href="/directory">public directory</a>.
+            </p>
+          </div>
+
+          <div className="card preview-card">
+            <label>Live preview</label>
+            <div className={`preview-stage ${theme}`}>
+              <WidgetPreview origin={origin} style={style} theme={theme} author={author} message={message} />
+            </div>
           </div>
         </div>
-        <label>Message</label>
-        <textarea value={message} rows={2} onChange={(e) => setMessage(e.target.value)} />
 
-        <label>Live preview</label>
-        <div className="preview-area" ref={previewRef} />
-      </div>
-
-      <div className="card">
-        <h2>2. Copy this snippet into your site</h2>
-        <p className="muted">Paste it anywhere in your HTML — a footer, an about page, a blog post.</p>
-        <pre>{embedCode}</pre>
-        <div style={{ marginTop: 16 }}>
-          <button className="btn" onClick={copy}>
+        <div className="card" style={{ marginTop: 20 }}>
+          <label>Copy this into your site</label>
+          <pre>{embedCode}</pre>
+          <button className="btn" onClick={copy} style={{ marginTop: 14 }}>
             {copied ? "✓ Copied!" : "Copy embed code"}
           </button>
         </div>
-      </div>
+      </section>
 
-      <p className="muted" style={{ marginTop: 32 }}>
-        Are you the operator of this instance?{" "}
-        <a href="/dashboard">View the usage dashboard →</a>
-      </p>
+      {/* ---------- ELIGIBILITY / CHECK ---------- */}
+      <section className="section" style={{ paddingTop: 0 }}>
+        <div className="two-cta">
+          <a className="cta-card" href="/eligibility">
+            <span className="cta-emoji">📜</span>
+            <strong>Do I qualify?</strong>
+            <span className="muted">
+              See which uses of AI are allowed (refining, grammar) and which aren&apos;t (generating
+              whole posts).
+            </span>
+          </a>
+          <a className="cta-card" href="/check">
+            <span className="cta-emoji">🔍</span>
+            <strong>Check my writing</strong>
+            <span className="muted">
+              Get honest, specific feedback on where your page reads generic — and how to make it
+              unmistakably yours.
+            </span>
+          </a>
+        </div>
+      </section>
+
+      {/* ---------- PROMOTE / HOW TO ADD ---------- */}
+      <section className="section">
+        <h2 className="sec-title">Add it to your sidebar</h2>
+        <p className="sec-sub">Paste the snippet as an HTML block wherever you want it to show.</p>
+        <div className="howto">
+          <div className="howto-card">
+            <span className="num">WP</span>
+            <strong>WordPress</strong>
+            <p>Appearance → Widgets → add a <em>Custom HTML</em> block to your sidebar → paste.</p>
+          </div>
+          <div className="howto-card">
+            <span className="num">Gh</span>
+            <strong>Ghost</strong>
+            <p>Settings → Code injection, or drop an <em>HTML card</em> into a post/page.</p>
+          </div>
+          <div className="howto-card">
+            <span className="num">{"</>"}</span>
+            <strong>Plain HTML</strong>
+            <p>Paste the snippet anywhere in your template — sidebar, footer, or byline.</p>
+          </div>
+          <div className="howto-card">
+            <span className="num">◆</span>
+            <strong>Webflow / Framer</strong>
+            <p>Add an <em>Embed / Code</em> element to your layout and paste the snippet.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* ---------- FOOTER ---------- */}
+      <footer className="footer">
+        <p>
+          🌱 <strong>No AI Content</strong> — free &amp; open source. Only the embedding domain is
+          recorded; no cookies, no visitor tracking.
+        </p>
+        <p className="muted">
+          <a href="/directory">Directory</a> · <a href="/eligibility">Rules</a> ·{" "}
+          <a href="/check">Check my site</a> · <a href="/dashboard">Operator dashboard</a>
+        </p>
+      </footer>
+
+      <StoryModal open={storyOpen} onClose={() => setStoryOpen(false)} />
     </main>
   );
+}
+
+/** Renders the real widget.js into an isolated node for preview. */
+function WidgetPreview({
+  origin,
+  style,
+  theme,
+  author,
+  message,
+}: {
+  origin: string;
+  style: Style;
+  theme: string;
+  author: string;
+  message: string;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const host = ref.current;
+    if (!host || !origin) return;
+    host.innerHTML = "";
+    const s = document.createElement("script");
+    s.src = `${origin}/widget.js`;
+    if (author) s.setAttribute("data-author", author);
+    s.setAttribute("data-message", message);
+    s.setAttribute("data-style", style);
+    s.setAttribute("data-theme", theme);
+    host.appendChild(s);
+  }, [origin, style, theme, author, message]);
+  return <div ref={ref} className="widget-host" />;
 }
 
 function escapeAttr(s: string) {
