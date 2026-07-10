@@ -57,16 +57,39 @@ export default function Home() {
 
   return (
     <main>
+      {/* ---------- NAV ---------- */}
+      <header className="nav">
+        <a className="brand" href="/">
+          <span className="brand-seal" aria-hidden>
+            ✒︎
+          </span>
+          <span className="brand-name">
+            NAC<span className="brand-sub">No AI Content</span>
+          </span>
+        </a>
+        <nav className="nav-links">
+          <a href="#styles">Styles</a>
+          <a href="#build">Build</a>
+          <a href="/directory">Directory</a>
+          <a href="/eligibility">Rules</a>
+          <a href="/check">Check</a>
+          <a className="btn sm" href="#build">
+            Get your stamp
+          </a>
+        </nav>
+      </header>
+
       {/* ---------- HERO ---------- */}
       <section className="hero">
         <div className="hero-inner">
-          <span className="pill-tag">🌱 Open source · Free forever</span>
+          <span className="pill-tag">🌱 NAC · Open source · Free forever</span>
           <h1>
             Real writing by <span className="grad">real humans</span>.
           </h1>
           <p className="lede">
-            A badge for blogs written by a person — not generated end-to-end by a machine.
-            Add it to your sidebar to tell readers your ideas and words are yours.
+            <strong>NAC — No AI Content.</strong> A badge for blogs written by a person, not
+            generated end-to-end by a machine. Add it to your sidebar to tell readers the ideas
+            and words are yours.
           </p>
           <div className="hero-cta">
             <a className="btn lg" href="#build">
@@ -85,6 +108,29 @@ export default function Home() {
             end-to-end AI-generated post as your own is not. This badge is a small, honest
             signal that a person is still behind the words.
           </p>
+        </div>
+      </section>
+
+      {/* ---------- HOW IT WORKS ---------- */}
+      <section className="section" style={{ paddingBottom: 24 }}>
+        <h2 className="sec-title">How NAC works</h2>
+        <p className="sec-sub">Live in under two minutes. No account, no cost.</p>
+        <div className="steps">
+          <div className="step">
+            <span className="step-n">1</span>
+            <strong>Customize your seal</strong>
+            <span className="muted">Pick a style, add your name, region &amp; category.</span>
+          </div>
+          <div className="step">
+            <span className="step-n">2</span>
+            <strong>Copy one line of code</strong>
+            <span className="muted">Paste the snippet into your sidebar, footer, or byline.</span>
+          </div>
+          <div className="step">
+            <span className="step-n">3</span>
+            <strong>Get listed</strong>
+            <span className="muted">Your site joins the public directory of human writers.</span>
+          </div>
         </div>
       </section>
 
@@ -238,15 +284,63 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ---------- FAQ ---------- */}
+      <section className="section">
+        <h2 className="sec-title">Questions</h2>
+        <div className="faq">
+          <details>
+            <summary>Is NAC anti-AI?</summary>
+            <p>
+              No — it&apos;s pro-human. Using AI to fix grammar, tighten a sentence, or pressure-test
+              an idea is fine. What NAC stands against is publishing whole posts generated
+              end-to-end by a machine and passing them off as your own writing.
+            </p>
+          </details>
+          <details>
+            <summary>Do you track my visitors?</summary>
+            <p>
+              No. NAC records only the <strong>domain</strong> the badge runs on, plus a timestamp
+              and a count. No IP addresses, no cookies, no visitor profiles.
+            </p>
+          </details>
+          <details>
+            <summary>Can NAC prove my content is AI-free?</summary>
+            <p>
+              Honestly, no tool can — AI detectors routinely mislabel real human writing. The badge
+              is a <em>declaration</em> you choose to make. The optional{" "}
+              <a href="/check">Check</a> page gives constructive feedback to help you improve, not a
+              verdict.
+            </p>
+          </details>
+          <details>
+            <summary>Is it really free?</summary>
+            <p>
+              Yes. NAC is free and open source (MIT). Host it yourself or use the shared instance —
+              no account required to add the badge.
+            </p>
+          </details>
+          <details>
+            <summary>Where can I put the badge?</summary>
+            <p>
+              Anywhere you can paste HTML — a sidebar widget, a footer, an about page, or a byline.
+              It works on WordPress, Ghost, Webflow, Framer, and plain HTML sites.
+            </p>
+          </details>
+        </div>
+      </section>
+
       {/* ---------- FOOTER ---------- */}
       <footer className="footer">
         <p>
-          🌱 <strong>No AI Content</strong> — free &amp; open source. Only the embedding domain is
-          recorded; no cookies, no visitor tracking.
+          ✒︎ <strong>NAC — No AI Content</strong>. Free &amp; open source. Only the embedding domain
+          is recorded; no cookies, no visitor tracking.
         </p>
         <p className="muted">
           <a href="/directory">Directory</a> · <a href="/eligibility">Rules</a> ·{" "}
-          <a href="/check">Check my site</a> · <a href="/dashboard">Operator dashboard</a>
+          <a href="/check">Check my site</a> · <a href="/dashboard">Dashboard</a> ·{" "}
+          <a href="https://github.com/imswarnil/No-AI-Content" target="_blank" rel="noreferrer">
+            GitHub
+          </a>
         </p>
       </footer>
 

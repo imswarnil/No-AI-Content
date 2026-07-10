@@ -140,11 +140,12 @@
       '<path stroke-width="3" d="M100 54 C106 54 111 66 111 78 L100 92 L89 78 C89 66 94 54 100 54 Z"/>' +
       '<path stroke-width="2.4" d="M100 70 L100 89"/></g>' +
       '<circle cx="100" cy="68" r="2.5" fill="' + ink + '"/>' +
-      // center wordmark
+      // center wordmark (with NAC monogram)
       '<g fill="' + ink + '" font-family="' + SERIF + '" text-anchor="middle">' +
-      '<text x="100" y="117" font-size="17" font-weight="700" letter-spacing="1">HUMAN</text>' +
-      '<text x="100" y="133" font-size="17" font-weight="700" letter-spacing="1">WRITTEN</text>' +
-      '<text x="100" y="147" font-size="8" letter-spacing="1.5" opacity="0.85">EST. ' + year + "</text>" +
+      '<text x="100" y="105" font-size="7.5" font-weight="700" letter-spacing="4" opacity="0.9">N A C</text>' +
+      '<text x="100" y="123" font-size="17" font-weight="700" letter-spacing="1">HUMAN</text>' +
+      '<text x="100" y="139" font-size="17" font-weight="700" letter-spacing="1">WRITTEN</text>' +
+      '<text x="100" y="152" font-size="7.5" letter-spacing="1.5" opacity="0.85">EST. ' + year + "</text>" +
       "</g></g></svg>"
     );
   }

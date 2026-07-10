@@ -81,7 +81,7 @@ export default function Eligibility() {
 
       <footer className="footer">
         <p>
-          🌱 <strong>No AI Content</strong> — free &amp; open source.
+          ✒︎ <strong>NAC — No AI Content</strong>. Free &amp; open source.
         </p>
         <p className="muted">
           <Link href="/">Home</Link> · <Link href="/directory">Directory</Link>

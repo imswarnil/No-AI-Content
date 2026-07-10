@@ -1,19 +1,19 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-const TITLE = "No AI Content — the human-written badge for your site";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://nac.imswarnil.com";
+const TITLE = "NAC — No AI Content · the human-written badge for your site";
 const DESCRIPTION =
-  "A free, open-source embeddable badge that lets authors declare their content is human-written — AI used only to refine, never to generate. Add the notary-style stamp to your blog and join a public directory of humans who still write by hand.";
+  "NAC (No AI Content) is a free, open-source embeddable badge that lets authors declare their content is human-written — AI used only to refine, never to generate. Add the notary-style stamp to your blog and join a public directory of humans who still write by hand.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
     default: TITLE,
-    template: "%s · No AI Content",
+    template: "%s · NAC",
   },
   description: DESCRIPTION,
-  applicationName: "No AI Content",
+  applicationName: "NAC — No AI Content",
   keywords: [
     "no AI content",
     "human written badge",
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     url: SITE_URL,
-    siteName: "No AI Content",
+    siteName: "NAC — No AI Content",
     title: TITLE,
     description: DESCRIPTION,
   },
@@ -52,7 +52,8 @@ const JSON_LD = {
   "@graph": [
     {
       "@type": "SoftwareApplication",
-      name: "No AI Content",
+      name: "NAC — No AI Content",
+      alternateName: "NAC",
       applicationCategory: "WebApplication",
       operatingSystem: "Any (web)",
       description: DESCRIPTION,
@@ -63,13 +64,15 @@ const JSON_LD = {
     },
     {
       "@type": "WebSite",
-      name: "No AI Content",
+      name: "NAC — No AI Content",
+      alternateName: "NAC",
       url: SITE_URL,
       description: DESCRIPTION,
     },
     {
       "@type": "Organization",
-      name: "No AI Content",
+      name: "NAC — No AI Content",
+      alternateName: "NAC",
       url: SITE_URL,
       logo: `${SITE_URL}/icon.svg`,
     },
