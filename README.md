@@ -1,14 +1,16 @@
 <div align="center">
 
-<img src="docs/badge-animated.svg" alt="No AI Content — animated notary stamp" width="200" />
+<img src="docs/badge-animated.svg" alt="NAC — animated notary stamp" width="200" />
 
-# 🌱 No AI Content
+# ✒︎ NAC — No AI Content
 
 ### The human‑written badge for the open web.
 
-A free, open‑source **notary‑style stamp** that lets authors publicly declare their work is
-written by a person — with AI used only to *refine*, never to *generate*.
+**NAC** is a free, open‑source **notary‑style stamp** that lets authors publicly declare their work
+is written by a person — with AI used only to *refine*, never to *generate*.
 Paste one line of code, and join a public directory of humans who still write by hand.
+
+🔗 **[nac.imswarnil.com](https://nac.imswarnil.com)**
 
 <br/>
 
@@ -21,7 +23,7 @@ Paste one line of code, and join a public directory of humans who still write by
 
 <br/>
 
-**[Live demo](#) · [Add your site](#-quick-start) · [Who qualifies](#-what-counts-as-human-written) · [The directory](#)**
+**[Live demo](https://nac.imswarnil.com) · [Add your site](#-quick-start) · [Who qualifies](#-what-counts-as-human-written) · [The directory](https://nac.imswarnil.com/directory)**
 
 </div>
 
@@ -67,7 +69,7 @@ microprint ring, and an engraved rosette) so it's distinctive and hard to casual
 ### 1. Run locally
 
 ```bash
-git clone <your-repo-url> no-ai-content && cd no-ai-content
+git clone https://github.com/imswarnil/No-AI-Content.git nac && cd no-ai-content
 npm install
 cp .env.example .env      # fill in the values below
 npm run dev               # → http://localhost:3000
@@ -87,7 +89,7 @@ npm run dev               # → http://localhost:3000
 1. Push to GitHub → import the repo at [vercel.com](https://vercel.com/new).
 2. Add a **Postgres** database (Vercel Storage, or a Neon string).
 3. Set the env vars above in **Project → Settings → Environment Variables**.
-4. **Deploy.** Your stamp is served from `https://your-project.vercel.app/widget.js`.
+4. **Deploy.** Your stamp is served from `https://nac.imswarnil.com/widget.js`.
 
 ---
 
@@ -97,7 +99,7 @@ Authors customize the badge on your homepage and copy a one‑line snippet:
 
 ```html
 <script
-  src="https://your-project.vercel.app/widget.js"
+  src="https://nac.imswarnil.com/widget.js"
   data-author="Jane Doe"
   data-message="Written by a human. AI is used only to refine ideas — never to generate."
   data-style="stamp"

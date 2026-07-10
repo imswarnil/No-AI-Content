@@ -45,10 +45,10 @@ const SLIDES: Slide[] = [
   },
   {
     emoji: "🤝",
-    title: "Add yours",
+    title: "Add the NAC seal",
     body: "Paste one line of code, and join a public directory of humans who still write by hand.",
     narration:
-      "Add yours. Paste one line of code, and join a growing directory of humans who still write by hand.",
+      "Add the N-A-C seal. Paste one line of code, and join a growing directory of humans who still write by hand.",
     accent: "#7c3aed",
   },
 ];
