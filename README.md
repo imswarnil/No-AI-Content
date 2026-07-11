@@ -177,7 +177,7 @@ The exact **flagged phrases** are listed so writers know what to rewrite, and an
 | Route | What it does |
 | --- | --- |
 | `/` | Landing + live badge builder + animated story modal (with text‑to‑speech). |
-| `/directory` | Public roll of human‑written sites — **sidebar checkbox filters** (category/region with counts), instant search, and rich cards (favicon, fetched site title & description). |
+| `/directory` | Public roll of human‑written sites — **sidebar checkbox filters** (category/region with counts), instant search, rich cards (favicon, fetched site title & description). **Listings are live‑verified**: a site only appears while the widget is actually found on its homepage (re‑checked daily) or its badge pinged in the last 7 days — remove the widget and the listing disappears. |
 | `/eligibility` | The allowed / not‑allowed checklist. |
 | `/check` | The AI content detector (own engine) + optional Claude second opinion. |
 | `/detector` | SEO alias → redirects to `/check` (also `/ai-content-detector`, `/ai-checker`). |

@@ -6,10 +6,18 @@ type Site = {
   domain: string;
   author: string | null;
   message: string | null;
+  has_widget: boolean | null;
+  check_at: string | null;
   first_seen: string;
   last_seen: string;
   hits: string;
 };
+
+/** Mirrors isWidgetPresent in lib/db.ts (client component can't import it). */
+function listedInDirectory(s: Site): boolean {
+  if (s.has_widget !== false) return true;
+  return Date.now() - new Date(s.last_seen).getTime() < 7 * 24 * 3600 * 1000;
+}
 
 export default function Dashboard() {
   const [token, setToken] = useState("");
@@ -99,6 +107,7 @@ export default function Dashboard() {
                     <tr>
                       <th>Domain</th>
                       <th>Author</th>
+                      <th>Directory</th>
                       <th>Loads</th>
                       <th>First seen</th>
                       <th>Last seen</th>
@@ -113,6 +122,17 @@ export default function Dashboard() {
                           </a>
                         </td>
                         <td>{s.author || <span className="muted">—</span>}</td>
+                        <td>
+                          {listedInDirectory(s) ? (
+                            <span title={s.has_widget ? "Widget found on homepage" : "Not verified yet / recent badge loads"}>
+                              ✅ listed
+                            </span>
+                          ) : (
+                            <span className="muted" title="Widget not found on homepage and no badge loads in 7 days">
+                              🚫 hidden
+                            </span>
+                          )}
+                        </td>
                         <td>{Number(s.hits).toLocaleString()}</td>
                         <td className="muted">{fmt(s.first_seen)}</td>
                         <td className="muted">{fmt(s.last_seen)}</td>
