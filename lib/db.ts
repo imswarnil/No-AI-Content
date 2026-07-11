@@ -45,6 +45,10 @@ export async function ensureSchema(): Promise<void> {
   await sql`ALTER TABLE sites ADD COLUMN IF NOT EXISTS title TEXT`;
   await sql`ALTER TABLE sites ADD COLUMN IF NOT EXISTS description TEXT`;
   await sql`ALTER TABLE sites ADD COLUMN IF NOT EXISTS meta_at TIMESTAMPTZ`;
+  // Widget-presence verification: was the badge found on the homepage at the
+  // last check? NULL = never determined (unreachable / not yet checked).
+  await sql`ALTER TABLE sites ADD COLUMN IF NOT EXISTS has_widget BOOLEAN`;
+  await sql`ALTER TABLE sites ADD COLUMN IF NOT EXISTS check_at TIMESTAMPTZ`;
   schemaReady = true;
 }
 
@@ -56,25 +60,49 @@ export type SiteRow = {
   category: string | null;
   title: string | null;
   description: string | null;
+  has_widget: boolean | null;
+  check_at: string | null;
   first_seen: string;
   last_seen: string;
   hits: string; // BIGINT comes back as a string
 };
 
-/** Persist a metadata fetch attempt (stamps meta_at even when nothing was found). */
-export async function saveSiteMeta(
+/**
+ * Persist a homepage check: metadata + whether the widget was found.
+ * hasWidget=null (site unreachable) keeps the previous verdict — an outage
+ * shouldn't delist a site. meta_at/check_at stamp the attempt regardless so
+ * dead sites aren't re-fetched on every page view.
+ */
+export async function saveSiteCheck(
   domain: string,
   title: string | null,
   description: string | null,
+  hasWidget: boolean | null,
 ): Promise<void> {
   await ensureSchema();
   await sql`
     UPDATE sites
     SET title       = COALESCE(${title}, title),
         description = COALESCE(${description}, description),
-        meta_at     = now()
+        has_widget  = COALESCE(${hasWidget}, has_widget),
+        meta_at     = now(),
+        check_at    = now()
     WHERE domain = ${domain}
   `;
+}
+
+const TRACK_GRACE_DAYS = 7;
+
+/**
+ * Is the badge considered present right now? Listed while either:
+ *  - the last homepage check found the widget (or no check has concluded yet
+ *    — new sites get the benefit of the doubt until verified), or
+ *  - the badge pinged /api/track within the last 7 days (covers widgets that
+ *    live on inner pages the homepage check can't see).
+ */
+export function isWidgetPresent(s: { has_widget: boolean | null; last_seen: string }): boolean {
+  if (s.has_widget !== false) return true;
+  return Date.now() - new Date(s.last_seen).getTime() < TRACK_GRACE_DAYS * 24 * 3600 * 1000;
 }
 
 /** Record a badge load from a given domain. Upserts and increments the hit count. */
@@ -103,7 +131,8 @@ export async function recordHit(
 export async function listSites(): Promise<SiteRow[]> {
   await ensureSchema();
   const rows = await sql`
-    SELECT domain, author, message, region, category, first_seen, last_seen, hits
+    SELECT domain, author, message, region, category, title, description,
+           has_widget, check_at, first_seen, last_seen, hits
     FROM sites
     ORDER BY last_seen DESC
   `;

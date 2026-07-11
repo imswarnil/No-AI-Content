@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { sql, ensureSchema, saveSiteMeta } from "@/lib/db";
+import { sql, ensureSchema, saveSiteCheck, isWidgetPresent } from "@/lib/db";
 import { fetchSiteMeta } from "@/lib/meta";
 import DirectoryClient, { type DirSite } from "./DirectoryClient";
 
@@ -13,44 +13,52 @@ export const metadata: Metadata = {
   alternates: { canonical: "/directory" },
 };
 
-type DbSite = DirSite & { meta_at: string | null };
+type DbSite = DirSite & {
+  check_at: string | null;
+  has_widget: boolean | null;
+  last_seen: string;
+};
 
+/** Only sites whose widget is verifiably present right now are listed. */
 async function getSites(): Promise<DbSite[]> {
   try {
     await ensureSchema();
     const sites = (await sql`
-      SELECT domain, author, region, category, title, description, first_seen, meta_at
+      SELECT domain, author, region, category, title, description,
+             has_widget, check_at, first_seen, last_seen
       FROM sites
       ORDER BY first_seen ASC
     `) as DbSite[];
-    return await enrichMeta(sites);
+    await checkSites(sites);
+    return sites.filter(isWidgetPresent);
   } catch {
     return [];
   }
 }
 
 /**
- * Lazily pull each site's title + description. At most 6 stale sites are
- * fetched per page view (in parallel, 6s timeout each) so the directory keeps
- * loading fast while the cache fills; meta_at is stamped even on failure so
- * dead sites are retried only monthly.
+ * One homepage fetch per site yields both the card metadata (title,
+ * description) and the widget-presence verdict. At most 6 sites whose last
+ * check is >24h old are re-checked per page view (in parallel, 6s timeout
+ * each) so the directory keeps loading fast; check_at is stamped even on
+ * failure so dead sites aren't retried on every view.
  */
-async function enrichMeta(sites: DbSite[]): Promise<DbSite[]> {
-  const staleBefore = Date.now() - 30 * 24 * 3600 * 1000;
+async function checkSites(sites: DbSite[]): Promise<void> {
+  const staleBefore = Date.now() - 24 * 3600 * 1000;
   const stale = sites
-    .filter((s) => !s.meta_at || new Date(s.meta_at).getTime() < staleBefore)
+    .filter((s) => !s.check_at || new Date(s.check_at).getTime() < staleBefore)
     .slice(0, 6);
-  if (stale.length === 0) return sites;
+  if (stale.length === 0) return;
 
   await Promise.all(
     stale.map(async (s) => {
       const meta = await fetchSiteMeta(s.domain);
       s.title = meta.title ?? s.title;
       s.description = meta.description ?? s.description;
-      await saveSiteMeta(s.domain, meta.title, meta.description).catch(() => {});
+      s.has_widget = meta.hasWidget ?? s.has_widget;
+      await saveSiteCheck(s.domain, meta.title, meta.description, meta.hasWidget).catch(() => {});
     }),
   );
-  return sites;
 }
 
 export default async function Directory({
@@ -86,7 +94,7 @@ export default async function Directory({
 
       <section className="section wide">
         <DirectoryClient
-          sites={all.map(({ meta_at, ...s }) => s)}
+          sites={all.map(({ check_at, has_widget, last_seen, ...s }) => s)}
           initialRegions={searchParams.region || ""}
           initialCategories={searchParams.category || ""}
           initialQuery={searchParams.q || ""}

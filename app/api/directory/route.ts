@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { sql, ensureSchema } from "@/lib/db";
+import { sql, ensureSchema, isWidgetPresent } from "@/lib/db";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,7 +14,8 @@ export async function GET() {
   try {
     await ensureSchema();
     const rows = (await sql`
-      SELECT domain, author, region, category, title, description, first_seen
+      SELECT domain, author, region, category, title, description, first_seen,
+             has_widget, last_seen
       FROM sites
       ORDER BY first_seen ASC
     `) as {
@@ -25,10 +26,17 @@ export async function GET() {
       title: string | null;
       description: string | null;
       first_seen: string;
+      has_widget: boolean | null;
+      last_seen: string;
     }[];
 
+    // Same rule as the directory page: only sites whose widget is present now.
+    const sites = rows
+      .filter(isWidgetPresent)
+      .map(({ has_widget, last_seen, ...s }) => s);
+
     return NextResponse.json(
-      { ok: true, count: rows.length, sites: rows },
+      { ok: true, count: sites.length, sites },
       { headers: { "Cache-Control": "public, max-age=60" } }
     );
   } catch (err) {

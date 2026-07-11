@@ -1,10 +1,19 @@
 /**
- * Fetches a site's public metadata (title + description) for richer directory
- * cards. Results are cached in the `sites` table (`meta_at` stamps the attempt,
- * even on failure, so a dead site isn't re-fetched on every page view).
+ * Fetches a site's homepage once and extracts (a) public metadata (title +
+ * description) for richer directory cards, and (b) whether the NAC widget
+ * <script> is still present — the directory only lists sites where it is.
+ * Results are cached in the `sites` table.
+ *
+ * `hasWidget` is tri-state: true/false when the homepage was readable, null
+ * when the site couldn't be reached (unknown — keep the previous verdict; an
+ * outage shouldn't delist anyone).
  */
 
-export type SiteMeta = { title: string | null; description: string | null };
+export type SiteMeta = {
+  title: string | null;
+  description: string | null;
+  hasWidget: boolean | null;
+};
 
 const ENTITIES: Record<string, string> = {
   amp: "&",
@@ -51,9 +60,14 @@ export async function fetchSiteMeta(domain: string): Promise<SiteMeta> {
       redirect: "follow",
       signal: AbortSignal.timeout(6000),
     });
-    if (!res.ok) return { title: null, description: null };
+    if (!res.ok) return { title: null, description: null, hasWidget: null };
     // Metadata lives in <head>; 200 KB is plenty and bounds memory.
     const html = (await res.text()).slice(0, 200_000);
+
+    // The embed is `<script src="…/widget.js" data-…>` — a script tag whose
+    // src ends in widget.js is our badge (any host, so localhost/self-hosted
+    // NAC instances verify too).
+    const hasWidget = /<script[^>]+src=["'][^"']*\/widget\.js[^"']*["']/i.test(html);
 
     const titleTag = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
     const title =
@@ -66,8 +80,9 @@ export async function fetchSiteMeta(domain: string): Promise<SiteMeta> {
     return {
       title: title ? title.slice(0, 120) : null,
       description: description ? description.slice(0, 220) : null,
+      hasWidget,
     };
   } catch {
-    return { title: null, description: null };
+    return { title: null, description: null, hasWidget: null };
   }
 }
