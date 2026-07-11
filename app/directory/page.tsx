@@ -1,58 +1,64 @@
+import type { Metadata } from "next";
 import Link from "next/link";
-import { sql, ensureSchema } from "@/lib/db";
+import { sql, ensureSchema, saveSiteMeta } from "@/lib/db";
+import { fetchSiteMeta } from "@/lib/meta";
+import DirectoryClient, { type DirSite } from "./DirectoryClient";
 
 export const dynamic = "force-dynamic";
 
-type Row = {
-  domain: string;
-  author: string | null;
-  region: string | null;
-  category: string | null;
-  first_seen: string;
+export const metadata: Metadata = {
+  title: "Directory of human-written blogs — no AI content",
+  description:
+    "Browse and search blogs and sites that display the No AI Content stamp — written by real people, filterable by category and region. Find blogs which don't use AI to generate content.",
+  alternates: { canonical: "/directory" },
 };
 
-async function getSites(): Promise<Row[]> {
+type DbSite = DirSite & { meta_at: string | null };
+
+async function getSites(): Promise<DbSite[]> {
   try {
     await ensureSchema();
-    return (await sql`
-      SELECT domain, author, region, category, first_seen
+    const sites = (await sql`
+      SELECT domain, author, region, category, title, description, first_seen, meta_at
       FROM sites
       ORDER BY first_seen ASC
-    `) as Row[];
+    `) as DbSite[];
+    return await enrichMeta(sites);
   } catch {
     return [];
   }
 }
 
-function fmt(iso: string) {
-  return new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "short" });
+/**
+ * Lazily pull each site's title + description. At most 6 stale sites are
+ * fetched per page view (in parallel, 6s timeout each) so the directory keeps
+ * loading fast while the cache fills; meta_at is stamped even on failure so
+ * dead sites are retried only monthly.
+ */
+async function enrichMeta(sites: DbSite[]): Promise<DbSite[]> {
+  const staleBefore = Date.now() - 30 * 24 * 3600 * 1000;
+  const stale = sites
+    .filter((s) => !s.meta_at || new Date(s.meta_at).getTime() < staleBefore)
+    .slice(0, 6);
+  if (stale.length === 0) return sites;
+
+  await Promise.all(
+    stale.map(async (s) => {
+      const meta = await fetchSiteMeta(s.domain);
+      s.title = meta.title ?? s.title;
+      s.description = meta.description ?? s.description;
+      await saveSiteMeta(s.domain, meta.title, meta.description).catch(() => {});
+    }),
+  );
+  return sites;
 }
 
 export default async function Directory({
   searchParams,
 }: {
-  searchParams: { region?: string; category?: string };
+  searchParams: { region?: string; category?: string; q?: string };
 }) {
   const all = await getSites();
-  const region = searchParams.region || "";
-  const category = searchParams.category || "";
-
-  const regions = Array.from(new Set(all.map((s) => s.region).filter(Boolean))) as string[];
-  const categories = Array.from(new Set(all.map((s) => s.category).filter(Boolean))) as string[];
-
-  const sites = all.filter(
-    (s) => (!region || s.region === region) && (!category || s.category === category),
-  );
-
-  const qs = (over: Partial<{ region: string; category: string }>) => {
-    const p = new URLSearchParams();
-    const r = over.region ?? region;
-    const c = over.category ?? category;
-    if (r) p.set("region", r);
-    if (c) p.set("category", c);
-    const s = p.toString();
-    return s ? `/directory?${s}` : "/directory";
-  };
 
   return (
     <main>
@@ -64,7 +70,7 @@ export default async function Directory({
           </h1>
           <p className="lede">
             {all.length > 0
-              ? `${all.length} site${all.length === 1 ? "" : "s"} proudly display the No AI Content stamp.`
+              ? `${all.length} site${all.length === 1 ? "" : "s"} proudly display the No AI Content stamp. Search or filter to find human-written blogs you'll love.`
               : "Be the first to add the No AI Content stamp to your site."}
           </p>
           <div className="hero-cta">
@@ -72,90 +78,19 @@ export default async function Directory({
               Add your site
             </Link>
             <Link className="btn lg ghost" href="/check">
-              Check my writing
+              AI content detector
             </Link>
           </div>
         </div>
       </section>
 
-      <section className="section">
-        {(regions.length > 0 || categories.length > 0) && (
-          <div className="filters">
-            {regions.length > 0 && (
-              <div className="filter-row">
-                <span className="flabel">Region</span>
-                <Link className={`chip ${!region ? "on" : ""}`} href={qs({ region: "" })}>
-                  All
-                </Link>
-                {regions.map((r) => (
-                  <Link key={r} className={`chip ${region === r ? "on" : ""}`} href={qs({ region: r })}>
-                    {r}
-                  </Link>
-                ))}
-              </div>
-            )}
-            {categories.length > 0 && (
-              <div className="filter-row">
-                <span className="flabel">Category</span>
-                <Link className={`chip ${!category ? "on" : ""}`} href={qs({ category: "" })}>
-                  All
-                </Link>
-                {categories.map((cat) => (
-                  <Link
-                    key={cat}
-                    className={`chip ${category === cat ? "on" : ""}`}
-                    href={qs({ category: cat })}
-                  >
-                    {cat}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {sites.length === 0 ? (
-          <p className="sec-sub">
-            {all.length === 0 ? (
-              <>
-                No sites yet. <Link href="/#build">Create your stamp</Link> and you&apos;ll appear here.
-              </>
-            ) : (
-              <>No sites match that filter.</>
-            )}
-          </p>
-        ) : (
-          <div className="dir-grid">
-            {sites.map((s) => (
-              <a
-                key={s.domain}
-                className="dir-card"
-                href={`https://${s.domain}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <img
-                  className="dir-favi"
-                  src={`https://www.google.com/s2/favicons?domain=${s.domain}&sz=64`}
-                  alt=""
-                  width={32}
-                  height={32}
-                  loading="lazy"
-                />
-                <span className="dir-meta">
-                  <strong>{s.domain}</strong>
-                  <span className="muted">
-                    {[s.author, s.category, s.region].filter(Boolean).join(" · ") ||
-                      `since ${fmt(s.first_seen)}`}
-                  </span>
-                </span>
-                <span className="dir-arrow" aria-hidden>
-                  ↗
-                </span>
-              </a>
-            ))}
-          </div>
-        )}
+      <section className="section wide">
+        <DirectoryClient
+          sites={all.map(({ meta_at, ...s }) => s)}
+          initialRegions={searchParams.region || ""}
+          initialCategories={searchParams.category || ""}
+          initialQuery={searchParams.q || ""}
+        />
       </section>
 
       <footer className="footer">
@@ -164,7 +99,7 @@ export default async function Directory({
         </p>
         <p className="muted">
           <Link href="/">Home</Link> · <Link href="/eligibility">Rules</Link> ·{" "}
-          <Link href="/dashboard">Operator dashboard</Link>
+          <Link href="/check">Detector</Link> · <Link href="/dashboard">Operator dashboard</Link>
         </p>
       </footer>
     </main>

@@ -11,11 +11,13 @@ type Signal = {
   weight: number;
   lean: "ai" | "human" | "neutral";
 };
+type Match = { phrase: string; count: number; kind: "cliche" | "vocab" };
 type Detection = {
   score: number;
   verdict: "reads_human" | "mixed_signals" | "reads_ai_generated";
   confidence: string;
   signals: Signal[];
+  matches: Match[];
   stats: { words: number; sentences: number; avgSentenceLen: number; burstiness: number; uniqueRatio: number };
 };
 
@@ -187,6 +189,23 @@ export default function Check() {
                 ))}
               </div>
             </div>
+
+            {det.matches.length > 0 && (
+              <div className="card" style={{ marginTop: 18 }}>
+                <h2 style={{ marginTop: 0 }}>Flagged phrases</h2>
+                <p className="muted" style={{ marginTop: -4 }}>
+                  Words and phrases LLMs over-use, found in this text. Rewriting these in your own
+                  voice is the fastest way to lower the score.
+                </p>
+                <div className="match-list">
+                  {det.matches.map((m) => (
+                    <span key={m.phrase} className={`match-chip ${m.kind}`}>
+                      “{m.phrase}”{m.count > 1 ? ` ×${m.count}` : ""}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="card" style={{ marginTop: 18, textAlign: "center" }}>
               {det.verdict === "reads_human" ? (

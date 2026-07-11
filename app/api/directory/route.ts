@@ -6,17 +6,26 @@ export const dynamic = "force-dynamic";
 
 /**
  * PUBLIC endpoint: the roll of sites displaying the badge.
- * Returns domain + author only (no counts, no timestamps beyond join date) so it
- * can be shown openly. Domains are already public — the badge is on a public page.
+ * Returns domain, author and the self-declared region/category (no counts, no
+ * timestamps beyond join date) so it can be shown openly. Domains are already
+ * public — the badge is on a public page.
  */
 export async function GET() {
   try {
     await ensureSchema();
     const rows = (await sql`
-      SELECT domain, author, first_seen
+      SELECT domain, author, region, category, title, description, first_seen
       FROM sites
       ORDER BY first_seen ASC
-    `) as { domain: string; author: string | null; first_seen: string }[];
+    `) as {
+      domain: string;
+      author: string | null;
+      region: string | null;
+      category: string | null;
+      title: string | null;
+      description: string | null;
+      first_seen: string;
+    }[];
 
     return NextResponse.json(
       { ok: true, count: rows.length, sites: rows },
