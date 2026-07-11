@@ -41,6 +41,10 @@ export async function ensureSchema(): Promise<void> {
   // Add columns for instances created before region/category existed.
   await sql`ALTER TABLE sites ADD COLUMN IF NOT EXISTS region TEXT`;
   await sql`ALTER TABLE sites ADD COLUMN IF NOT EXISTS category TEXT`;
+  // Fetched site metadata (directory cards): page title, description, last attempt.
+  await sql`ALTER TABLE sites ADD COLUMN IF NOT EXISTS title TEXT`;
+  await sql`ALTER TABLE sites ADD COLUMN IF NOT EXISTS description TEXT`;
+  await sql`ALTER TABLE sites ADD COLUMN IF NOT EXISTS meta_at TIMESTAMPTZ`;
   schemaReady = true;
 }
 
@@ -50,10 +54,28 @@ export type SiteRow = {
   message: string | null;
   region: string | null;
   category: string | null;
+  title: string | null;
+  description: string | null;
   first_seen: string;
   last_seen: string;
   hits: string; // BIGINT comes back as a string
 };
+
+/** Persist a metadata fetch attempt (stamps meta_at even when nothing was found). */
+export async function saveSiteMeta(
+  domain: string,
+  title: string | null,
+  description: string | null,
+): Promise<void> {
+  await ensureSchema();
+  await sql`
+    UPDATE sites
+    SET title       = COALESCE(${title}, title),
+        description = COALESCE(${description}, description),
+        meta_at     = now()
+    WHERE domain = ${domain}
+  `;
+}
 
 /** Record a badge load from a given domain. Upserts and increments the hit count. */
 export async function recordHit(

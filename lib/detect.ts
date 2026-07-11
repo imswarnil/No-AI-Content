@@ -13,13 +13,15 @@
 // ------------------------------------------------------------------ tunables
 
 export const WEIGHTS = {
-  cliches: 0.2, // stock AI phrases ("in today's fast-paced world")
-  llmVocab: 0.18, // words LLMs overuse ("delve", "tapestry", "leverage")
-  transitions: 0.12, // formal connectors ("moreover", "furthermore")
-  burstiness: 0.18, // sentence-length variety (humans vary a lot)
-  personalVoice: 0.14, // first-person + concrete specifics
-  contractions: 0.1, // humans contract ("don't"); formal AI expands
-  filler: 0.08, // intensifiers/hedges ("very", "crucial", "various")
+  cliches: 0.18, // stock AI phrases ("in today's fast-paced world")
+  llmVocab: 0.16, // words LLMs overuse ("delve", "tapestry", "leverage")
+  transitions: 0.11, // formal connectors ("moreover", "furthermore")
+  burstiness: 0.16, // sentence-length variety (humans vary a lot)
+  personalVoice: 0.13, // first-person + concrete specifics
+  contractions: 0.09, // humans contract ("don't"); formal AI expands
+  filler: 0.07, // intensifiers/hedges ("very", "crucial", "various")
+  punctuation: 0.05, // em-dash / semicolon habit (LLMs love "—")
+  starters: 0.05, // many sentences opening with the same word ("The… The… This…")
 };
 
 export const CLICHES = [
@@ -156,11 +158,14 @@ export type Signal = {
   lean: "ai" | "human" | "neutral";
 };
 
+export type Match = { phrase: string; count: number; kind: "cliche" | "vocab" };
+
 export type Detection = {
   score: number; // 0..100 (higher = more AI-like)
   verdict: "reads_human" | "mixed_signals" | "reads_ai_generated";
   confidence: "low" | "medium" | "high";
   signals: Signal[]; // sorted by contribution, descending
+  matches: Match[]; // the actual flagged phrases/words, most frequent first
   stats: {
     words: number;
     sentences: number;
@@ -183,21 +188,40 @@ function splitSentences(text: string): string[] {
     .map((s) => s.trim())
     .filter((s) => s.split(/\s+/).length >= 2);
 }
-function countPhrases(lower: string, phrases: string[]): number {
-  let n = 0;
-  for (const p of phrases) {
-    let idx = lower.indexOf(p);
-    while (idx !== -1) {
-      n++;
-      idx = lower.indexOf(p, idx + p.length);
-    }
-  }
-  return n;
-}
 function countWords(tokens: string[], set: Set<string>): number {
   let n = 0;
   for (const t of tokens) if (set.has(t)) n++;
   return n;
+}
+function collectMatches(
+  lower: string,
+  tokens: string[],
+): { matches: Match[]; clicheN: number; vocabN: number } {
+  const tally = new Map<string, Match>();
+  let clicheN = 0;
+  for (const p of CLICHES) {
+    let idx = lower.indexOf(p);
+    let n = 0;
+    while (idx !== -1) {
+      n++;
+      idx = lower.indexOf(p, idx + p.length);
+    }
+    if (n > 0) {
+      clicheN += n;
+      tally.set(p, { phrase: p, count: n, kind: "cliche" });
+    }
+  }
+  const vocabSet = new Set(LLM_VOCAB);
+  let vocabN = 0;
+  for (const t of tokens) {
+    if (!vocabSet.has(t)) continue;
+    vocabN++;
+    const cur = tally.get(t);
+    if (cur) cur.count++;
+    else tally.set(t, { phrase: t, count: 1, kind: "vocab" });
+  }
+  const matches = Array.from(tally.values()).sort((a, b) => b.count - a.count);
+  return { matches, clicheN, vocabN };
 }
 function lean(ai: number): Signal["lean"] {
   return ai >= 0.55 ? "ai" : ai <= 0.35 ? "human" : "neutral";
@@ -222,7 +246,7 @@ export function detectAI(raw: string): Detection {
   const uniqueRatio = words ? new Set(tokens).size / words : 0;
 
   // --- signals ---
-  const clicheN = countPhrases(lower, CLICHES);
+  const { matches, clicheN, vocabN } = collectMatches(lower, tokens);
   const clicheDens = per1k(clicheN);
   const sCliches: Signal = {
     key: "cliches",
@@ -233,7 +257,6 @@ export function detectAI(raw: string): Detection {
     lean: lean(clamp01(clicheDens / 6)),
   };
 
-  const vocabN = countWords(tokens, new Set(LLM_VOCAB));
   const vocabDens = per1k(vocabN);
   const sVocab: Signal = {
     key: "llmVocab",
@@ -308,7 +331,44 @@ export function detectAI(raw: string): Detection {
     lean: lean(clamp01(fillerDens / 22)),
   };
 
-  const signals = [sCliches, sVocab, sTrans, sBurst, sVoice, sContr, sFiller];
+  // Em-dash / semicolon habit. LLMs reach for "—" far more than most bloggers.
+  const dashN = (text.match(/—|--/g) || []).length + (text.match(/;/g) || []).length;
+  const dashDens = per1k(dashN);
+  const dashAi = clamp01(dashDens / 10);
+  const sPunct: Signal = {
+    key: "punctuation",
+    label: "Em-dashes & semicolons",
+    detail: `${dashN} found (${dashDens.toFixed(1)}/1k words)`,
+    aiLikeness: dashAi,
+    weight: WEIGHTS.punctuation,
+    lean: lean(dashAi),
+  };
+
+  // Repetitive sentence openers ("The… The… This… This…") read templated.
+  const starters = sentences
+    .map((s) => (s.split(/\s+/)[0] || "").toLowerCase().replace(/[^a-z']/g, ""))
+    .filter(Boolean);
+  let dupStarters = 0;
+  if (starters.length >= 5) {
+    const freq = new Map<string, number>();
+    for (const w of starters) freq.set(w, (freq.get(w) || 0) + 1);
+    for (const n of freq.values()) if (n > 1) dupStarters += n - 1;
+  }
+  const dupRatio = starters.length >= 5 ? dupStarters / starters.length : 0;
+  const startAi = starters.length >= 5 ? clamp01((dupRatio - 0.15) / 0.45) : 0.4;
+  const sStart: Signal = {
+    key: "starters",
+    label: "Sentence-opener variety",
+    detail:
+      starters.length < 5
+        ? "Too few sentences to judge"
+        : `${Math.round(dupRatio * 100)}% of sentences reuse an opener`,
+    aiLikeness: startAi,
+    weight: WEIGHTS.starters,
+    lean: starters.length < 5 ? "neutral" : lean(startAi),
+  };
+
+  const signals = [sCliches, sVocab, sTrans, sBurst, sVoice, sContr, sFiller, sPunct, sStart];
 
   const totalW = signals.reduce((a, s) => a + s.weight, 0) || 1;
   const score = Math.round(
@@ -326,6 +386,7 @@ export function detectAI(raw: string): Detection {
     verdict,
     confidence,
     signals,
+    matches: matches.slice(0, 14),
     stats: {
       words,
       sentences: sentences.length,

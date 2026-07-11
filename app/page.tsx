@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import StoryModal from "./StoryModal";
+import { CATEGORIES, REGIONS } from "@/lib/taxonomy";
 
 type Style = "stamp" | "banner" | "compact";
 
@@ -200,7 +201,13 @@ export default function Home() {
                   value={region}
                   onChange={(e) => setRegion(e.target.value)}
                   placeholder="e.g. India"
+                  list="nac-regions"
                 />
+                <datalist id="nac-regions">
+                  {REGIONS.map((r) => (
+                    <option key={r} value={r} />
+                  ))}
+                </datalist>
               </div>
               <div>
                 <label>Category (optional)</label>
@@ -208,7 +215,13 @@ export default function Home() {
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
                   placeholder="e.g. Tech, Travel, Personal"
+                  list="nac-categories"
                 />
+                <datalist id="nac-categories">
+                  {CATEGORIES.map((c) => (
+                    <option key={c} value={c} />
+                  ))}
+                </datalist>
               </div>
             </div>
             <p className="muted" style={{ fontSize: 12, marginTop: 10 }}>

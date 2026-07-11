@@ -123,8 +123,11 @@ Authors customize the badge on your homepage and copy a one‑line snippet:
 | `data-region` / `data-category` | — | Powers the public directory filters. |
 | `data-link` | `/directory` | Where the badge links when clicked. |
 
-Every badge also renders a **"What is this?"** control that opens an animated explainer
-(the seal stamps in, a manifesto types out, and an "AI‑generated" chip is struck through).
+Every badge also renders a **"What is this?"** control that answers **inside the widget** — no
+modal. Clicking it replays the seal (the guilloché rings redraw stroke‑by‑stroke, the stamp
+*thumps* like a real seal, the rosette and microprint ring slowly counter‑rotate) while an
+explainer card slides open underneath: a manifesto types out and an "AI‑GENERATED" chip is
+struck through.
 
 ---
 
@@ -140,8 +143,28 @@ The rule of thumb: **if a reader deleted the AI's contribution, your post should
 | Summarizing sources you verify | Ghost‑written by AI, published as yours |
 | Translating your writing | No human idea behind it |
 
-The **`/check`** page fetches a page and returns a Claude‑powered *human‑ness review* with
-specific, constructive feedback.
+## 🔍 The detector — our own engine
+
+**`/check`** is a free **AI content detector** built from scratch (`lib/detect.ts`) — no
+third‑party API needed. Paste text or a URL and it returns a **transparent, signal‑based
+AI‑likeness score (0–100)** with every signal, weight and flagged phrase shown:
+
+| Signal | What it measures |
+| --- | --- |
+| AI cliché phrases | "in today's fast‑paced world", "let's dive in", … |
+| LLM‑favored vocabulary | "delve", "tapestry", "leverage", "seamless", … |
+| Formal transitions | "moreover", "furthermore", "consequently", … |
+| Sentence‑length burstiness | Humans vary rhythm; LLMs write uniformly |
+| Personal voice & specifics | First person, concrete numbers |
+| Contractions | Humans write "don't"; formal AI expands it |
+| Filler / intensifiers | "very", "crucial", "comprehensive", … |
+| Em‑dashes & semicolons | The famous LLM "—" habit |
+| Sentence‑opener variety | "The… The… This… This…" reads templated |
+
+Everything is tunable data — the weights and word lists live at the top of `lib/detect.ts`.
+The exact **flagged phrases** are listed so writers know what to rewrite, and an optional
+**Claude second opinion** gives qualitative feedback. Handy URLs like `/detector`,
+`/ai-content-detector` and `/ai-checker` all redirect to it.
 
 > ⚠️ **Honest by design:** reliable AI‑content detection is not possible — detectors routinely
 > mislabel real human writing. `/check` gives **qualitative guidance to help you improve**, never a
@@ -154,12 +177,14 @@ specific, constructive feedback.
 | Route | What it does |
 | --- | --- |
 | `/` | Landing + live badge builder + animated story modal (with text‑to‑speech). |
-| `/directory` | Public roll of participating sites, filterable by region & category. |
+| `/directory` | Public roll of human‑written sites — **sidebar checkbox filters** (category/region with counts), instant search, and rich cards (favicon, fetched site title & description). |
 | `/eligibility` | The allowed / not‑allowed checklist. |
-| `/check` | AI human‑ness review of a URL. |
+| `/check` | The AI content detector (own engine) + optional Claude second opinion. |
+| `/detector` | SEO alias → redirects to `/check` (also `/ai-content-detector`, `/ai-checker`). |
 | `/dashboard` | Private operator view (token‑gated): domains, loads, activity. |
 | `POST /api/track` | Records a domain‑only badge load (no cookies, no visitor data). |
-| `GET /api/directory` | Public list of embedding sites. |
+| `POST /api/detect` | Runs the in‑house detection engine on text or a URL. |
+| `GET /api/directory` | Public list of embedding sites (domain, author, region, category, title, description). |
 | `GET /api/sites` | Admin list (token‑gated). |
 | `POST /api/analyze` | Runs the Claude human‑ness review. |
 
@@ -196,13 +221,14 @@ cookies, no visitor tracking — fitting the honest‑content ethos.
 app/
   page.tsx            # landing + builder + story modal
   StoryModal.tsx      # animated slides + text-to-speech
-  directory/          # public roll (region/category filters)
+  directory/          # public roll (search + region/category filters)
   eligibility/        # the rules checklist
-  check/              # AI human-ness review UI
+  check/              # AI content detector UI (+ FAQ JSON-LD for SEO)
   dashboard/          # operator analytics
-  api/{track,sites,directory,analyze}/route.ts
+  api/{track,sites,directory,detect,analyze}/route.ts
   layout.tsx          # SEO metadata + JSON-LD
   icon.svg            # favicon (the seal)
+lib/detect.ts         # the in-house AI-likeness engine (tunable signals)
 lib/db.ts             # Neon Postgres + schema
 public/widget.js      # the embeddable stamp (self-contained)
 docs/                 # README assets

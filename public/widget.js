@@ -106,19 +106,19 @@
       "</defs>" +
       '<g transform="rotate(-7 100 100)">' +
       // guilloché band (fine interfering wavy rings)
-      '<g fill="none" stroke="' + ink + '" stroke-width="0.6" opacity="0.55">' +
-      '<path d="' + wavyRing(100, 100, 90, 2.6, 26, 0) + '"/>' +
-      '<path d="' + wavyRing(100, 100, 90, 2.6, 26, 0.6) + '"/>' +
-      '<path d="' + wavyRing(100, 100, 84, 1.8, 32, 0.3) + '"/>' +
+      '<g class="nac-guil" fill="none" stroke="' + ink + '" stroke-width="0.6" opacity="0.55">' +
+      '<path pathLength="100" d="' + wavyRing(100, 100, 90, 2.6, 26, 0) + '"/>' +
+      '<path pathLength="100" d="' + wavyRing(100, 100, 90, 2.6, 26, 0.6) + '"/>' +
+      '<path pathLength="100" d="' + wavyRing(100, 100, 84, 1.8, 32, 0.3) + '"/>' +
       "</g>" +
       // faint rosette behind the center
-      '<path d="' + rosette(100, 100, 46, 6, 12, 7) + '" fill="none" stroke="' + ink +
+      '<path class="nac-rose" d="' + rosette(100, 100, 46, 6, 12, 7) + '" fill="none" stroke="' + ink +
       '" stroke-width="0.4" opacity="0.18"/>' +
       // solid rings
       '<g fill="none" stroke="' + ink + '">' +
-      '<circle cx="100" cy="100" r="94" stroke-width="3.2"/>' +
-      '<circle cx="100" cy="100" r="80" stroke-width="1.2"/>' +
-      '<circle cx="100" cy="100" r="49" stroke-width="1.2"/>' +
+      '<circle class="nac-ring" pathLength="100" cx="100" cy="100" r="94" stroke-width="3.2"/>' +
+      '<circle class="nac-ring" pathLength="100" cx="100" cy="100" r="80" stroke-width="1.2"/>' +
+      '<circle class="nac-ring" pathLength="100" cx="100" cy="100" r="49" stroke-width="1.2"/>' +
       "</g>" +
       // side ornaments
       '<g fill="' + ink + '">' +
@@ -133,8 +133,8 @@
       '<textPath href="#' + botId + '" startOffset="50%" text-anchor="middle">' + esc(bottomText) + "</textPath></text>" +
       "</g>" +
       // microprint ring
-      '<text fill="' + ink + '" font-family="' + FONT + '" font-size="3.1" letter-spacing="0.3" opacity="0.9">' +
-      '<textPath href="#' + micId + '" startOffset="0">' + microString() + "</textPath></text>" +
+      '<g class="nac-micro"><text fill="' + ink + '" font-family="' + FONT + '" font-size="3.1" letter-spacing="0.3" opacity="0.9">' +
+      '<textPath href="#' + micId + '" startOffset="0">' + microString() + "</textPath></text></g>" +
       // pen-nib emblem
       '<g fill="none" stroke="' + ink + '" stroke-linejoin="round" stroke-linecap="round">' +
       '<path stroke-width="3" d="M100 54 C106 54 111 66 111 78 L100 92 L89 78 C89 66 94 54 100 54 Z"/>' +
@@ -159,7 +159,31 @@
       "@keyframes nacStampIn{0%{opacity:0;transform:scale(.7) rotate(-16deg)}" +
       "55%{opacity:1;transform:scale(1.06) rotate(2deg)}" +
       "75%{transform:scale(.98) rotate(-1deg)}100%{opacity:1;transform:none}}" +
-      "@media (prefers-reduced-motion:reduce){.nac-in{animation:none!important}}";
+      // --- "What is this?" in-widget show: rings redraw, rosette & microprint spin, stamp thumps ---
+      "@keyframes nacDraw{from{stroke-dashoffset:100}to{stroke-dashoffset:0}}" +
+      "@keyframes nacSpin{to{transform:rotate(360deg)}}" +
+      "@keyframes nacSpinR{to{transform:rotate(-360deg)}}" +
+      "@keyframes nacThump{0%{transform:none}35%{transform:scale(1.14) rotate(4deg)}" +
+      "60%{transform:scale(.94) rotate(-3deg)}80%{transform:scale(1.03) rotate(1deg)}100%{transform:none}}" +
+      "@keyframes nacBlink{50%{opacity:0}}" +
+      ".nac-play{animation:nacThump .9s cubic-bezier(.2,.9,.3,1.2) both}" +
+      ".nac-play .nac-ring{stroke-dasharray:100;animation:nacDraw 1.4s ease-out both}" +
+      ".nac-play .nac-guil path{stroke-dasharray:100;animation:nacDraw 2s ease-out both}" +
+      ".nac-open .nac-rose{animation:nacSpin 16s linear infinite;transform-box:fill-box;transform-origin:center}" +
+      ".nac-open .nac-micro{animation:nacSpinR 40s linear infinite;transform-box:fill-box;transform-origin:center}" +
+      ".nac-panel{display:block;overflow:hidden;max-height:0;opacity:0;transform:translateY(-6px);" +
+      "transition:max-height .55s cubic-bezier(.2,.8,.2,1),opacity .4s ease,transform .45s ease}" +
+      ".nac-panel.nac-open-p{max-height:380px;opacity:1;transform:none}" +
+      ".nac-cursor{display:inline-block;width:2px;height:1.05em;vertical-align:-2px;margin-left:1px;animation:nacBlink 1s steps(1) infinite}" +
+      ".nac-chip{position:relative;display:inline-flex;align-items:center;border:2px dashed #ef4444;color:#ef4444;" +
+      "border-radius:9px;padding:6px 13px;font-weight:800;letter-spacing:1px;font-size:11.5px;opacity:0;transform:scale(.9);transition:all .4s ease}" +
+      ".nac-chip.nac-show{opacity:1;transform:none}" +
+      ".nac-chip svg{position:absolute;inset:-6px;width:calc(100% + 12px);height:calc(100% + 12px);overflow:visible}" +
+      ".nac-chip .nac-x{stroke:#ef4444;stroke-width:3.5;stroke-linecap:round;stroke-dasharray:200;stroke-dashoffset:200;transition:stroke-dashoffset .5s ease .35s}" +
+      ".nac-chip.nac-show .nac-x{stroke-dashoffset:0}" +
+      ".nac-links{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px;opacity:0;transition:opacity .4s ease}" +
+      ".nac-links.nac-show{opacity:1}" +
+      "@media (prefers-reduced-motion:reduce){.nac-in,.nac-play,.nac-play *,.nac-open .nac-rose,.nac-open .nac-micro{animation:none!important}}";
     document.head.appendChild(st);
   }
   var container = el(
@@ -198,107 +222,112 @@
   }
   container.appendChild(visual);
 
-  // "What is this?" CTA (skip on the tiny compact pill)
+  /* ---------------- "What is this?" — answers INSIDE the widget ----------------
+     Clicking the CTA replays the stamp (rings redraw stroke-by-stroke, the seal
+     thumps like a real stamp, the rosette + microprint slowly counter-rotate)
+     and slides an explainer card open right under the badge. No modal. */
+  var isOpen = false;
+  var typed = false;
+  var cta = null;
+  var panel = null;
+  var tw = null;
+  var aiChip = null;
+  var links = null;
+
   if (style !== "compact") {
-    var cta = document.createElement("button");
+    cta = document.createElement("button");
     cta.type = "button";
     cta.textContent = "ⓘ What is this?";
+    cta.setAttribute("aria-expanded", "false");
     cta.style.cssText =
       "cursor:pointer;border:none;background:transparent;color:" + c.sub +
       ";font-family:" + FONT + ";font-size:11px;font-weight:600;letter-spacing:.2px;padding:2px 6px;text-decoration:underline;text-underline-offset:2px;";
     cta.addEventListener("click", function (e) {
       e.preventDefault();
-      openOverlay();
+      toggle();
     });
     container.appendChild(cta);
+
+    var panelW = style === "banner" ? 400 : Math.max(sizeAttr > 0 ? sizeAttr : 156, 230);
+    panel = el("span", "width:" + panelW + "px;max-width:88vw;");
+    panel.className = "nac-panel";
+    var card = el(
+      "span",
+      "display:block;background:" + c.bg + ";color:" + c.fg + ";border:1px solid " + c.border +
+      ";border-radius:14px;padding:14px 15px 15px;text-align:center;box-shadow:0 6px 22px rgba(2,6,23,.12);margin-top:2px;"
+    );
+    tw = el("span", "display:block;min-height:60px;font-size:12.5px;line-height:1.55;text-align:left;");
+    aiChip = el("span", "margin-top:10px;", 'AI-GENERATED<svg viewBox="0 0 120 44" preserveAspectRatio="none" aria-hidden="true"><line class="nac-x" x1="6" y1="6" x2="114" y2="38"/></svg>');
+    aiChip.className = "nac-chip";
+    links = el("span");
+    links.className = "nac-links";
+    var linkCss =
+      "text-decoration:none;border-radius:8px;padding:7px 12px;font-size:11.5px;font-weight:700;font-family:" + FONT + ";";
+    var a1 = el("a", linkCss + "background:" + ink + ";color:#fff;", "The humans →");
+    a1.href = base + "/directory";
+    a1.target = "_blank";
+    a1.rel = "noopener noreferrer";
+    var a2 = el("a", linkCss + "color:" + c.sub + ";border:1px solid " + c.border + ";", "The rules");
+    a2.href = base + "/eligibility";
+    a2.target = "_blank";
+    a2.rel = "noopener noreferrer";
+    links.appendChild(a1);
+    links.appendChild(a2);
+    card.appendChild(tw);
+    card.appendChild(aiChip);
+    card.appendChild(links);
+    panel.appendChild(card);
+    container.appendChild(panel);
   }
 
-  script.parentNode.insertBefore(container, script.nextSibling);
+  function toggle() {
+    isOpen = !isOpen;
+    cta.setAttribute("aria-expanded", String(isOpen));
+    cta.textContent = isOpen ? "✕ Close" : "ⓘ What is this?";
+    container.classList.toggle("nac-open", isOpen);
+    panel.classList.toggle("nac-open-p", isOpen);
+    if (!isOpen) return;
 
-  /* ---------------- "What is this?" animated overlay (Shadow DOM) ---------------- */
-  function openOverlay() {
-    var host = document.createElement("div");
-    host.style.cssText = "all:initial;position:fixed;inset:0;z-index:2147483647;";
-    document.body.appendChild(host);
-    var root = host.attachShadow ? host.attachShadow({ mode: "open" }) : host;
+    // Replay the stamp: rings redraw + seal thump (restart by reflow).
+    visual.classList.remove("nac-play");
+    void visual.offsetWidth;
+    visual.classList.add("nac-play");
 
-    root.innerHTML =
-      "<style>" +
-      "*{box-sizing:border-box;margin:0;font-family:" + FONT + ";}" +
-      ".back{position:fixed;inset:0;background:rgba(2,6,23,.72);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;transition:opacity .3s ease;}" +
-      ".back.in{opacity:1;}" +
-      ".panel{background:" + c.bg + ";color:" + c.fg + ";border:1px solid " + c.border +
-      ";border-radius:20px;max-width:440px;width:100%;padding:30px 28px;text-align:center;box-shadow:0 24px 70px rgba(0,0,0,.5);transform:translateY(14px) scale(.96);opacity:0;transition:transform .35s cubic-bezier(.2,.8,.2,1),opacity .35s ease;}" +
-      ".back.in .panel{transform:none;opacity:1;}" +
-      ".seal{display:inline-block;animation:pop .6s cubic-bezier(.2,1.4,.4,1) both;}" +
-      "@keyframes pop{from{transform:scale(.4) rotate(-25deg);opacity:0}to{transform:none;opacity:1}}" +
-      ".tw{min-height:66px;font-size:15px;line-height:1.5;color:" + c.fg + ";margin:18px 4px 6px;}" +
-      ".tw b{color:" + ink + ";}" +
-      ".cursor{display:inline-block;width:2px;height:1.05em;background:" + ink + ";vertical-align:-2px;margin-left:1px;animation:bl 1s steps(1) infinite;}" +
-      "@keyframes bl{50%{opacity:0}}" +
-      ".ai{margin:14px auto 4px;position:relative;display:inline-flex;align-items:center;gap:8px;border:2px dashed #ef4444;color:#ef4444;border-radius:10px;padding:8px 16px;font-weight:800;letter-spacing:1px;font-size:13px;opacity:0;transform:scale(.9);transition:all .4s ease;}" +
-      ".ai.show{opacity:1;transform:none;}" +
-      ".ai svg{position:absolute;inset:-6px;width:calc(100% + 12px);height:calc(100% + 12px);overflow:visible;}" +
-      ".ai .x{stroke:#ef4444;stroke-width:4;stroke-linecap:round;stroke-dasharray:200;stroke-dashoffset:200;transition:stroke-dashoffset .5s ease .35s;}" +
-      ".ai.show .x{stroke-dashoffset:0;}" +
-      ".btns{margin-top:22px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;opacity:0;transition:opacity .4s ease;}" +
-      ".btns.show{opacity:1;}" +
-      ".b{cursor:pointer;border:none;border-radius:10px;padding:11px 18px;font-size:14px;font-weight:700;text-decoration:none;}" +
-      ".b.p{background:" + ink + ";color:#fff;}" +
-      ".b.s{background:transparent;color:" + c.sub + ";border:1px solid " + c.border + ";}" +
-      "</style>" +
-      '<div class="back"><div class="panel">' +
-      '<span class="seal">' + stampSVG(120) + "</span>" +
-      '<div class="tw"></div>' +
-      '<div class="ai">AI-GENERATED<svg viewBox="0 0 120 44" preserveAspectRatio="none"><line class="x" x1="6" y1="6" x2="114" y2="38"/></svg></div>' +
-      '<div class="btns">' +
-      '<a class="b p" href="' + base + '/directory">See humans who write by hand →</a>' +
-      '<a class="b s" href="' + base + '/eligibility">The rules</a>' +
-      '<button class="b s nac-close">Close</button>' +
-      "</div></div></div>";
-
-    var back = root.querySelector(".back");
-    var tw = root.querySelector(".tw");
-    var ai = root.querySelector(".ai");
-    var btns = root.querySelector(".btns");
-
-    function close() {
-      back.classList.remove("in");
-      setTimeout(function () { host.remove(); }, 300);
+    if (typed) {
+      aiChip.classList.add("nac-show");
+      links.classList.add("nac-show");
+      return;
     }
-    root.querySelector(".nac-close").addEventListener("click", close);
-    back.addEventListener("click", function (e) { if (e.target === back) close(); });
+    typed = true;
 
-    setTimeout(function () { back.classList.add("in"); }, 20);
-
-    // Typewriter the manifesto
-    var lines = [
-      "Some blogs are still written by a person.\n",
-      "AI can sharpen a sentence — it shouldn't ",
-      "<b>replace the writer.</b>\n",
-      "This stamp means a human is still behind the words.",
-    ];
-    var full = lines.join("");
+    // Typewriter the manifesto into the card.
+    var full =
+      "Some blogs are still written by a person.\n" +
+      "AI can sharpen a sentence — it shouldn't <b>replace the writer.</b>\n" +
+      "This stamp means a human is still behind the words.";
     var i = 0;
     function type() {
       if (i > full.length) {
-        ai.classList.add("show");
-        setTimeout(function () { btns.classList.add("show"); }, 700);
+        aiChip.classList.add("nac-show");
+        setTimeout(function () { links.classList.add("nac-show"); }, 600);
         return;
       }
-      // render partial while keeping <b> tags intact
       var partial = full.slice(0, i);
       var opens = (partial.match(/<b>/g) || []).length;
       var closes = (partial.match(/<\/b>/g) || []).length;
-      tw.innerHTML = partial.replace(/\n/g, "<br>") + (opens > closes ? "</b>" : "") + '<span class="cursor"></span>';
-      // skip over tag characters quickly
+      tw.innerHTML =
+        partial.replace(/\n/g, "<br>").replace(/<b>/g, '<b style="color:' + ink + '">') +
+        (opens > closes ? "</b>" : "") +
+        '<span class="nac-cursor" style="background:' + ink + '"></span>';
       if (full.substr(i, 3) === "<b>") i += 3;
       else if (full.substr(i, 4) === "</b>") i += 4;
       else i += 1;
-      setTimeout(type, full.substr(i, 1) === "\n" ? 260 : 26);
+      setTimeout(type, full.substr(i, 1) === "\n" ? 240 : 22);
     }
-    setTimeout(type, 650);
+    setTimeout(type, 450);
   }
+
+  script.parentNode.insertBefore(container, script.nextSibling);
 
   /* ---------------- Tracking ping (domain-only, no PII) ---------------- */
   try {
