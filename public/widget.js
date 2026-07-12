@@ -165,7 +165,6 @@
       "@keyframes nacSpinR{to{transform:rotate(-360deg)}}" +
       "@keyframes nacThump{0%{transform:none}35%{transform:scale(1.14) rotate(4deg)}" +
       "60%{transform:scale(.94) rotate(-3deg)}80%{transform:scale(1.03) rotate(1deg)}100%{transform:none}}" +
-      "@keyframes nacBlink{50%{opacity:0}}" +
       ".nac-play{animation:nacThump .9s cubic-bezier(.2,.9,.3,1.2) both}" +
       ".nac-play .nac-ring{stroke-dasharray:100;animation:nacDraw 1.4s ease-out both}" +
       ".nac-play .nac-guil path{stroke-dasharray:100;animation:nacDraw 2s ease-out both}" +
@@ -174,7 +173,9 @@
       ".nac-panel{display:block;overflow:hidden;max-height:0;opacity:0;transform:translateY(-6px);" +
       "transition:max-height .55s cubic-bezier(.2,.8,.2,1),opacity .4s ease,transform .45s ease}" +
       ".nac-panel.nac-open-p{max-height:380px;opacity:1;transform:none}" +
-      ".nac-cursor{display:inline-block;width:2px;height:1.05em;vertical-align:-2px;margin-left:1px;animation:nacBlink 1s steps(1) infinite}" +
+      ".nac-line{display:block;margin:0 0 5px;opacity:0;transform:translateY(6px);" +
+      "transition:opacity .5s ease,transform .5s cubic-bezier(.2,.8,.2,1)}" +
+      ".nac-show .nac-line{opacity:1;transform:none}" +
       ".nac-chip{position:relative;display:inline-flex;align-items:center;border:2px dashed #ef4444;color:#ef4444;" +
       "border-radius:9px;padding:6px 13px;font-weight:800;letter-spacing:1px;font-size:11.5px;opacity:0;transform:scale(.9);transition:all .4s ease}" +
       ".nac-chip.nac-show{opacity:1;transform:none}" +
@@ -300,31 +301,32 @@
     }
     typed = true;
 
-    // Typewriter the manifesto into the card.
-    var full =
-      "Some blogs are still written by a person.\n" +
-      "AI can sharpen a sentence — it shouldn't <b>replace the writer.</b>\n" +
-      "This stamp means a human is still behind the words.";
-    var i = 0;
-    function type() {
-      if (i > full.length) {
-        aiChip.classList.add("nac-show");
-        setTimeout(function () { links.classList.add("nac-show"); }, 600);
-        return;
-      }
-      var partial = full.slice(0, i);
-      var opens = (partial.match(/<b>/g) || []).length;
-      var closes = (partial.match(/<\/b>/g) || []).length;
-      tw.innerHTML =
-        partial.replace(/\n/g, "<br>").replace(/<b>/g, '<b style="color:' + ink + '">') +
-        (opens > closes ? "</b>" : "") +
-        '<span class="nac-cursor" style="background:' + ink + '"></span>';
-      if (full.substr(i, 3) === "<b>") i += 3;
-      else if (full.substr(i, 4) === "</b>") i += 4;
-      else i += 1;
-      setTimeout(type, full.substr(i, 1) === "\n" ? 240 : 22);
-    }
-    setTimeout(type, 450);
+    // Reveal the manifesto as clean, styled text — no typewriter, no cursor.
+    // Each line fades and lifts into place in sequence for a calm, native feel.
+    var lines = [
+      "Some blogs are still written by a person.",
+      'AI can sharpen a sentence — it shouldn\'t <b style="color:' + ink + '">replace the writer.</b>',
+      "This stamp means a human is still behind the words.",
+    ];
+    tw.innerHTML = lines
+      .map(function (line, idx) {
+        return (
+          '<span class="nac-line" style="transition-delay:' +
+          (120 + idx * 130) +
+          'ms">' +
+          line +
+          "</span>"
+        );
+      })
+      .join("");
+    // Trigger the reveal on the next frame so the transition runs.
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        tw.classList.add("nac-show");
+      });
+    });
+    setTimeout(function () { aiChip.classList.add("nac-show"); }, 560);
+    setTimeout(function () { links.classList.add("nac-show"); }, 700);
   }
 
   script.parentNode.insertBefore(container, script.nextSibling);
