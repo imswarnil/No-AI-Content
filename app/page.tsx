@@ -34,6 +34,28 @@ export default function Home() {
     setOrigin(window.location.origin);
   }, []);
 
+  // Reveal-on-scroll: fade + lift elements marked `.reveal` as they enter view.
+  useEffect(() => {
+    const els = Array.from(document.querySelectorAll<HTMLElement>(".reveal"));
+    if (!("IntersectionObserver" in window) || els.length === 0) {
+      els.forEach((el) => el.classList.add("in"));
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            e.target.classList.add("in");
+            io.unobserve(e.target);
+          }
+        }
+      },
+      { rootMargin: "0px 0px -10% 0px", threshold: 0.12 },
+    );
+    els.forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, []);
+
   const embedCode = useMemo(() => {
     const attrs = [
       `src="${origin}/widget.js"`,
@@ -69,7 +91,7 @@ export default function Home() {
           </span>
         </a>
         <nav className="nav-links">
-          <a href="#styles">Styles</a>
+          <a href="/manifesto">Manifesto</a>
           <a href="#build">Build</a>
           <a href="/directory">Directory</a>
           <a href="/eligibility">Rules</a>
@@ -112,8 +134,71 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ---------- MISSION (big statement) ---------- */}
+      <section className="statement reveal">
+        <span className="kicker">The mission</span>
+        <p className="big">
+          Keep the web <span className="grad">human</span>.{" "}
+          <span className="muted-word">One honest badge at a time.</span>
+        </p>
+        <p className="support">
+          The internet is filling with text no person ever thought or wrote. NAC is a small,
+          public signal that pushes the other way — a way for real writers to stand up and say
+          <em> these words are mine.</em>
+        </p>
+      </section>
+
+      {/* ---------- WHY IT MATTERS (big statement, tinted band) ---------- */}
+      <div className="band">
+        <section className="statement reveal">
+          <span className="kicker">Why it matters</span>
+          <p className="big">
+            A machine can imitate your <span className="muted-word">style</span>.
+            <br />
+            It can&apos;t replace your <span className="grad">judgement</span>.
+          </p>
+          <p className="support">
+            Readers are learning to distrust polished, generic prose. A human voice — with a real
+            point of view, lived detail, and the odd rough edge — is becoming the rarest and most
+            valuable thing on the web. NAC helps yours get noticed.
+          </p>
+        </section>
+      </div>
+
+      {/* ---------- WHY USE NAC (value grid) ---------- */}
+      <section className="section reveal">
+        <h2 className="sec-title">Why writers add the seal</h2>
+        <p className="sec-sub">Three reasons it&apos;s worth one line of code.</p>
+        <div className="why-grid">
+          <div className="why-card">
+            <span className="ico" aria-hidden>🤝</span>
+            <h3>Earn reader trust</h3>
+            <p>
+              A visible, verifiable declaration tells visitors a person stands behind every word —
+              not a content farm.
+            </p>
+          </div>
+          <div className="why-card">
+            <span className="ico" aria-hidden>🔎</span>
+            <h3>Get discovered</h3>
+            <p>
+              Every badge lists your site in the public directory of human writers, filterable by
+              topic and region.
+            </p>
+          </div>
+          <div className="why-card">
+            <span className="ico" aria-hidden>🌱</span>
+            <h3>Stand for something</h3>
+            <p>
+              Join a growing movement of people who still write by hand — and help keep the open web
+              worth reading.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* ---------- HOW IT WORKS ---------- */}
-      <section className="section" style={{ paddingBottom: 24 }}>
+      <section className="section reveal" style={{ paddingBottom: 24 }}>
         <h2 className="sec-title">How NAC works</h2>
         <p className="sec-sub">Live in under two minutes. No account, no cost.</p>
         <div className="steps">
@@ -136,7 +221,7 @@ export default function Home() {
       </section>
 
       {/* ---------- STYLES SHOWCASE ---------- */}
-      <section id="styles" className="section">
+      <section id="styles" className="section reveal">
         <h2 className="sec-title">Three styles, one honest signal</h2>
         <p className="sec-sub">Pick whichever fits where you want it. All are customizable.</p>
         <div className="showcase">
@@ -153,7 +238,7 @@ export default function Home() {
       </section>
 
       {/* ---------- BUILDER ---------- */}
-      <section id="build" className="section">
+      <section id="build" className="section reveal">
         <h2 className="sec-title">Build your badge</h2>
         <div className="builder">
           <div className="card">
@@ -248,7 +333,7 @@ export default function Home() {
       </section>
 
       {/* ---------- ELIGIBILITY / CHECK ---------- */}
-      <section className="section" style={{ paddingTop: 0 }}>
+      <section className="section reveal" style={{ paddingTop: 0 }}>
         <div className="two-cta">
           <a className="cta-card" href="/eligibility">
             <span className="cta-emoji">📜</span>
@@ -270,7 +355,7 @@ export default function Home() {
       </section>
 
       {/* ---------- PROMOTE / HOW TO ADD ---------- */}
-      <section className="section">
+      <section className="section reveal">
         <h2 className="sec-title">Add it to your sidebar</h2>
         <p className="sec-sub">Paste the snippet as an HTML block wherever you want it to show.</p>
         <div className="howto">
@@ -298,7 +383,7 @@ export default function Home() {
       </section>
 
       {/* ---------- FAQ ---------- */}
-      <section className="section">
+      <section className="section reveal">
         <h2 className="sec-title">Questions</h2>
         <div className="faq">
           <details>
@@ -349,8 +434,9 @@ export default function Home() {
           is recorded; no cookies, no visitor tracking.
         </p>
         <p className="muted">
-          <a href="/directory">Directory</a> · <a href="/eligibility">Rules</a> ·{" "}
-          <a href="/check">Check my site</a> · <a href="/dashboard">Dashboard</a> ·{" "}
+          <a href="/manifesto">Manifesto</a> · <a href="/directory">Directory</a> ·{" "}
+          <a href="/eligibility">Rules</a> · <a href="/check">Check my site</a> ·{" "}
+          <a href="/dashboard">Dashboard</a> ·{" "}
           <a href="https://github.com/imswarnil/No-AI-Content" target="_blank" rel="noreferrer">
             GitHub
           </a>

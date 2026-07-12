@@ -48,10 +48,17 @@ export default function DirectoryClient({
   const [cats, setCats] = useState<Set<string>>(() => parseList(initialCategories));
   const [regs, setRegs] = useState<Set<string>>(() => parseList(initialRegions));
 
-  // Facet options: the suggested taxonomy plus anything sites actually
-  // declared. Options with sites float to the top; empty ones stay pickable.
-  const catCounts = useMemo(() => facetCounts(sites.map((s) => s.category), CATEGORIES), [sites]);
-  const regCounts = useMemo(() => facetCounts(sites.map((s) => s.region), REGIONS), [sites]);
+  // Facet options: only categories/regions that sites actually declared, sorted
+  // by count. A currently-selected value is always kept visible even if the last
+  // matching site is filtered out, so the user can still toggle it back off.
+  const catCounts = useMemo(
+    () => facetCounts(sites.map((s) => s.category), CATEGORIES).filter(([c, n]) => n > 0 || cats.has(c)),
+    [sites, cats],
+  );
+  const regCounts = useMemo(
+    () => facetCounts(sites.map((s) => s.region), REGIONS).filter(([r, n]) => n > 0 || regs.has(r)),
+    [sites, regs],
+  );
 
   function syncUrl(next: { q?: string; cats?: Set<string>; regs?: Set<string> }) {
     const p = new URLSearchParams();
@@ -110,6 +117,7 @@ export default function DirectoryClient({
           aria-label="Search the directory"
         />
 
+        {catCounts.length > 0 && (
         <fieldset className="facet">
           <legend>Category</legend>
           <div className="facet-list">
@@ -130,7 +138,9 @@ export default function DirectoryClient({
             ))}
           </div>
         </fieldset>
+        )}
 
+        {regCounts.length > 0 && (
         <fieldset className="facet">
           <legend>Country / region</legend>
           <div className="facet-list">
@@ -151,6 +161,7 @@ export default function DirectoryClient({
             ))}
           </div>
         </fieldset>
+        )}
 
         {hasFilters && (
           <button className="link-btn" onClick={clearAll}>
