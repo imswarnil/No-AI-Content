@@ -105,7 +105,7 @@ export default function Home() {
       {/* ---------- HERO ---------- */}
       <section className="hero">
         <div className="hero-inner">
-          <span className="pill-tag">🌱 NAC · Open source · Free forever</span>
+          <span className="pill-tag">✒︎ NAC · Open source · Free forever</span>
           <h1>
             Real writing by <span className="grad">real humans</span>.
           </h1>
@@ -424,6 +424,27 @@ export default function Home() {
               It works on WordPress, Ghost, Webflow, Framer, and plain HTML sites.
             </p>
           </details>
+        </div>
+      </section>
+
+      {/* ---------- THE ASK — one inverse band, near the end ---------- */}
+      <section className="section reveal">
+        <div className="cta-band">
+          <span className="kicker">The ask</span>
+          <h2>If a human wrote it, say so.</h2>
+          <p>
+            Every badge on a real blog makes the next reader trust the open web a little more.
+            Put the stamp where your words live — it takes one line of code, costs nothing,
+            and tells everyone who lands on your site that a person is behind the writing.
+          </p>
+          <div className="hero-cta">
+            <a className="btn lg" href="#build">
+              Add the badge to your site
+            </a>
+            <a className="btn lg ghost" href="/directory">
+              Meet the humans already in →
+            </a>
+          </div>
         </div>
       </section>
 

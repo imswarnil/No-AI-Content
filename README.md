@@ -14,12 +14,12 @@ Paste one line of code, and join a public directory of humans who still write by
 
 <br/>
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-16a34a.svg)](./LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-F04E2E.svg)](./LICENSE)
 [![Next.js](https://img.shields.io/badge/Next.js-14-000000?logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Postgres](https://img.shields.io/badge/Postgres-Neon-336791?logo=postgresql&logoColor=white)](https://neon.tech/)
 [![Deploy to Vercel](https://img.shields.io/badge/Deploy-Vercel-000000?logo=vercel)](https://vercel.com/new)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-16a34a.svg)](#-contributing)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-F04E2E.svg)](#-contributing)
 
 <br/>
 
@@ -207,13 +207,43 @@ cookies, no visitor tracking — fitting the honest‑content ethos.
 
 ---
 
-## 🧱 Tech stack
+## 🧰 Tools we used
 
-- **Next.js 14** (App Router) · **React 18** · **TypeScript**
-- **Postgres** via `@neondatabase/serverless`
-- **Claude** (`@anthropic-ai/sdk`, `claude-opus-4-8`) for the human‑ness review
-- Dependency‑free vanilla‑JS widget (inline SVG, Shadow‑DOM overlay, Web Speech API)
-- SEO: metadata, Open Graph, `sitemap.xml`, `robots.txt`, JSON‑LD (`SoftwareApplication`)
+<div align="center">
+
+[![Next.js](https://img.shields.io/badge/Next.js_14-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React_18-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript_5-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Neon Postgres](https://img.shields.io/badge/Neon_Postgres-00E599?style=for-the-badge&logo=postgresql&logoColor=black)](https://neon.tech/)
+[![Claude](https://img.shields.io/badge/Claude_API-D97757?style=for-the-badge&logo=anthropic&logoColor=white)](https://www.anthropic.com/)
+[![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com/)
+[![CSS3](https://img.shields.io/badge/Creator_Design_System-F04E2E?style=for-the-badge&logo=css3&logoColor=white)](https://creator.imswarnil.com/)
+[![Google Fonts](https://img.shields.io/badge/Google_Fonts-4285F4?style=for-the-badge&logo=googlefonts&logoColor=white)](https://fonts.google.com/)
+[![Claude Code](https://img.shields.io/badge/Claude_Code-1A1A1A?style=for-the-badge&logo=anthropic&logoColor=D97757)](https://claude.com/claude-code)
+
+</div>
+
+| Tool | Where it's used |
+| --- | --- |
+| **Next.js 14** (App Router) + **React 18** + **TypeScript** | The site, the builder, and every API route |
+| **Neon Postgres** (`@neondatabase/serverless`) | The `sites` table behind the public directory — serverless-friendly, no connection pool to babysit |
+| **Claude API** (`@anthropic-ai/sdk`) | The `/check` human-ness review — constructive feedback, never a verdict |
+| **[Creator Design System](https://creator.imswarnil.com/)** ("Frame & Signal") | The entire look & feel: tokens, type, motion, dark mode — one CSS file, zero runtime |
+| **Space Grotesk · Inter · IBM Plex Mono** | The system's three voices: display, body, and the slate |
+| **Vanilla JS widget** | `public/widget.js` — inline SVG, Shadow-DOM overlay, Web Speech API, zero dependencies |
+| **Vercel** | Hosting + deploys |
+
+## 🎨 Design
+
+The site is themed end‑to‑end by the **[Creator Design System](https://creator.imswarnil.com/)** —
+a token‑first, dependency‑free CSS system. `app/creator.css` is the system;
+`app/globals.css` is a thin NAC layer that only consumes its **semantic tokens**
+(`--accent`, `--fg-muted`, `--line-default`…), which is why:
+
+- **Dark mode is free** — it follows the OS via the token tier; no component knows which theme it's on.
+- **One accent, rationed** — the page is near‑monochrome so the signal‑red carries all the meaning.
+- **Motion is honest** — entrances travel 16px on the system's easings, and everything switches off under `prefers-reduced-motion`.
+- **The hero uses `svh`** — it fills the first viewport without jumping when mobile URL bars collapse.
 
 ## 📁 Structure
 
@@ -226,13 +256,45 @@ app/
   check/              # AI content detector UI (+ FAQ JSON-LD for SEO)
   dashboard/          # operator analytics
   api/{track,sites,directory,detect,analyze}/route.ts
-  layout.tsx          # SEO metadata + JSON-LD
+  layout.tsx          # SEO metadata + JSON-LD + fonts
+  creator.css         # the Creator Design System (vendored, unmodified)
+  globals.css         # NAC layer — consumes only the system's semantic tokens
   icon.svg            # favicon (the seal)
 lib/detect.ts         # the in-house AI-likeness engine (tunable signals)
 lib/db.ts             # Neon Postgres + schema
 public/widget.js      # the embeddable stamp (self-contained)
 docs/                 # README assets
 ```
+
+---
+
+## 🧠 What we learned building this
+
+Things this project taught us that a tutorial wouldn't:
+
+1. **AI detectors can't be trusted with verdicts.** Our own detection engine (`lib/detect.ts`)
+   made this obvious: every signal that flags AI prose also flags some real human writing.
+   That's why NAC is a *declaration* you make, and `/check` gives feedback instead of a score
+   you could fail.
+2. **A design system is a constraint engine, not a stylesheet.** Rebuilding the site on
+   token-first CSS meant deleting hard-coded colors, not adding classes. Once components only
+   read semantic tokens, dark mode, rebranding, and consistency stopped being work.
+3. **One accent color is a feature.** When the page is near-monochrome, the single red word in
+   the hero and the one filled button *are* the visual hierarchy. Adding a second hue is a
+   design decision, not a tweak.
+4. **`svh` beats `vh` on mobile.** `100vh` includes the collapsed URL bar, so hero sections
+   jump on scroll; `100svh` is the honest "small viewport" height and never shifts.
+5. **Motion needs an off switch and a resting state.** Entrances travel 16px, run once, and the
+   finished state is the resting state — so if `prefers-reduced-motion` (or a broken observer)
+   kills the animation, nothing is unreachable.
+6. **A widget must be dependency-free.** `widget.js` embeds on sites we don't control — so it's
+   one file, inline SVG, Shadow DOM for isolation, and no framework that could clash with the host page.
+7. **Privacy is an architecture choice.** Storing only *domain + timestamp + count* wasn't a
+   compliance afterthought — it shaped the schema, killed the need for cookies, and matches the
+   project's honesty pitch.
+8. **Serverless Postgres changes the driver, not just the host.** Neon's HTTP driver
+   (`@neondatabase/serverless`) exists because classic TCP pools and edge/serverless functions
+   don't mix.
 
 ---
 
