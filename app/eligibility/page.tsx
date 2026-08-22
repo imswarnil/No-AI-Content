@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { IconScale, IconCheck, IconX } from "../components/icons";
 
 export const metadata = {
   title: "Who qualifies — No AI Content",
@@ -27,7 +28,9 @@ export default function Eligibility() {
     <main>
       <section className="hero">
         <div className="hero-inner">
-          <span className="pill-tag">📜 The honest line</span>
+          <span className="pill-tag">
+            <IconScale size={13} /> The honest line
+          </span>
           <h1>
             What counts as <span className="grad">human-written</span>?
           </h1>
@@ -41,7 +44,7 @@ export default function Eligibility() {
       <section className="section">
         <div className="elig-grid">
           <div className="elig-card ok">
-            <h2>✅ Allowed — you still qualify</h2>
+            <h2><IconCheck size={19} /> Allowed — you still qualify</h2>
             <ul>
               {ALLOWED.map(([t, d]) => (
                 <li key={t}>
@@ -52,7 +55,7 @@ export default function Eligibility() {
             </ul>
           </div>
           <div className="elig-card no">
-            <h2>🚫 Not allowed — disqualifies</h2>
+            <h2><IconX size={19} /> Not allowed — disqualifies</h2>
             <ul>
               {NOT_ALLOWED.map(([t, d]) => (
                 <li key={t}>
@@ -74,19 +77,10 @@ export default function Eligibility() {
             I qualify — make my stamp
           </Link>{" "}
           <Link className="btn ghost" href="/check">
-            Check my site first
+            Verify my site first
           </Link>
         </div>
       </section>
-
-      <footer className="footer">
-        <p>
-          ✒︎ <strong>NAC — No AI Content</strong>. Free &amp; open source.
-        </p>
-        <p className="muted">
-          <Link href="/">Home</Link> · <Link href="/directory">Directory</Link>
-        </p>
-      </footer>
     </main>
   );
 }

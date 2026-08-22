@@ -2,15 +2,16 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { sql, ensureSchema, saveSiteCheck, isWidgetPresent } from "@/lib/db";
 import { fetchSiteMeta } from "@/lib/meta";
-import DirectoryClient, { type DirSite } from "./DirectoryClient";
+import BrowseClient, { type DirSite } from "./BrowseClient";
+import { IconFeather } from "../components/icons";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Directory of human-written blogs — no AI content",
+  title: "Browse human-written blogs — no AI content",
   description:
     "Browse and search blogs and sites that display the No AI Content stamp — written by real people, filterable by category and region. Find blogs which don't use AI to generate content.",
-  alternates: { canonical: "/directory" },
+  alternates: { canonical: "/browse" },
 };
 
 type DbSite = DirSite & {
@@ -40,7 +41,7 @@ async function getSites(): Promise<DbSite[]> {
  * One homepage fetch per site yields both the card metadata (title,
  * description) and the widget-presence verdict. At most 6 sites whose last
  * check is >24h old are re-checked per page view (in parallel, 6s timeout
- * each) so the directory keeps loading fast; check_at is stamped even on
+ * each) so the page keeps loading fast; check_at is stamped even on
  * failure so dead sites aren't retried on every view.
  */
 async function checkSites(sites: DbSite[]): Promise<void> {
@@ -61,7 +62,7 @@ async function checkSites(sites: DbSite[]): Promise<void> {
   );
 }
 
-export default async function Directory({
+export default async function Browse({
   searchParams,
 }: {
   searchParams: { region?: string; category?: string; q?: string };
@@ -70,46 +71,43 @@ export default async function Directory({
 
   return (
     <main>
-      <section className="hero">
+      <section className="hero short">
         <div className="hero-inner">
-          <span className="pill-tag">🖋️ The roll of humans</span>
+          <span className="pill-tag">
+            <IconFeather size={13} /> The roll of humans
+          </span>
           <h1>
-            Sites that write <span className="grad">by hand</span>.
+            Browse blogs written <span className="grad">by hand</span>.
           </h1>
           <p className="lede">
             {all.length > 0
-              ? `${all.length} site${all.length === 1 ? "" : "s"} proudly display the No AI Content stamp. Search or filter to find human-written blogs you'll love.`
+              ? `${all.length} site${all.length === 1 ? "" : "s"} proudly display the No AI Content stamp. Filter by what they write about and where they write from.`
               : "Be the first to add the No AI Content stamp to your site."}
+          </p>
+          <p className="lede" style={{ fontSize: "0.95rem" }}>
+            This page is why NAC exists: a place where readers who are tired of machine-generated
+            feeds can find people who still think and write for themselves. Every stamp placed on a
+            blog adds it here — and every listing is re-verified, so the roll stays honest.
           </p>
           <div className="hero-cta">
             <Link className="btn lg" href="/#build">
               Add your site
             </Link>
             <Link className="btn lg ghost" href="/check">
-              AI content detector
+              Verify writing first
             </Link>
           </div>
         </div>
       </section>
 
       <section className="section wide">
-        <DirectoryClient
+        <BrowseClient
           sites={all.map(({ check_at, has_widget, last_seen, ...s }) => s)}
           initialRegions={searchParams.region || ""}
           initialCategories={searchParams.category || ""}
           initialQuery={searchParams.q || ""}
         />
       </section>
-
-      <footer className="footer">
-        <p>
-          ✒︎ <strong>NAC — No AI Content</strong>. Free &amp; open source.
-        </p>
-        <p className="muted">
-          <Link href="/">Home</Link> · <Link href="/eligibility">Rules</Link> ·{" "}
-          <Link href="/check">Detector</Link> · <Link href="/dashboard">Operator dashboard</Link>
-        </p>
-      </footer>
     </main>
   );
 }

@@ -1,8 +1,9 @@
 /* =============================================================================
    NAC — No AI Content · site layer
-   Sits on top of the Creator Design System ("Frame & Signal", app/creator.css).
-   Rules here only consume the system's semantic tokens — never raw colours —
-   so one token override (or the OS theme) restyles the whole site.
+   Sits on top of app/base.css (tokens + reset + primitives) and
+   app/nac-theme.css (the "Ink & Seal" palette). Rules here only consume
+   semantic tokens — never raw colours — so one token override (or the OS
+   theme) restyles the whole site.
    ========================================================================== */
 
 body {
@@ -22,15 +23,18 @@ a:hover { color: var(--fg-link-hover); }
 .muted { color: var(--fg-muted); }
 
 /* ---------- NAV ---------- */
+/* Three tracks, not three flex items: the outer columns take equal width so
+   the middle one is centred against the *page*, not against whatever the
+   brand and the rail happen to measure. */
 .nav {
   position: sticky;
   top: 0;
   z-index: var(--z-nav, 50);
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: space-between;
   gap: var(--space-4);
-  padding: var(--space-3) max(var(--gutter, 1.25rem), calc((100% - 68rem) / 2));
+  padding: var(--space-3) max(var(--gutter, 1.25rem), calc((100% - 76rem) / 2));
   background: color-mix(in srgb, var(--bg-canvas) 88%, transparent);
   backdrop-filter: saturate(160%) blur(10px);
   border-bottom: var(--border-hair, 1px) solid var(--line-default);
@@ -43,16 +47,13 @@ a:hover { color: var(--fg-link-hover); }
   color: var(--fg-default);
 }
 .brand:hover { color: var(--fg-default); }
+/* The seal mark is an inline SVG (its own green square) — the wrapper just
+   aligns it. */
 .brand-seal {
-  width: 2rem;
-  height: 2rem;
-  border-radius: var(--radius-md);
-  background: var(--accent);
-  color: var(--fg-on-accent);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 1rem;
+  line-height: 0;
 }
 .brand-name {
   display: flex;
@@ -74,32 +75,158 @@ a:hover { color: var(--fg-link-hover); }
 .nav-links {
   display: flex;
   align-items: center;
-  gap: var(--space-1);
+  justify-content: center;
+  gap: var(--space-2);
 }
 .nav-links a:not(.btn) {
   display: inline-flex;
   align-items: center;
-  height: var(--control-sm, 2rem);
-  padding-inline: var(--space-3);
+  gap: var(--space-2);
+  height: var(--control-md, 2.25rem);
+  padding-inline: var(--space-4);
   border-radius: var(--radius-pill);
   text-decoration: none;
   color: var(--fg-muted);
-  font-size: var(--text-sm);
+  font-size: var(--text-md, 1.0625rem);
   font-weight: var(--weight-medium, 500);
+  letter-spacing: -0.01em;
+  transition: var(--t-colors);
+}
+/* The icon stays one step quieter than its label until the item is hovered,
+   so four icons in a row read as texture rather than four competing marks. */
+.nav-links a:not(.btn) svg {
+  flex: none;
+  color: var(--fg-subtle);
   transition: var(--t-colors);
 }
 .nav-links a:not(.btn):hover {
   color: var(--fg-default);
   background: var(--hover-wash);
 }
-@media (max-width: 700px) {
-  .nav-links a:not(.btn) { display: none; }
+.nav-links a:not(.btn):hover svg { color: var(--accent); }
+
+/* Current page: the seal-green wash the hover state only hints at, plus a
+   short underline anchored to the text. Both the fill and the rule are needed
+   — the wash alone reads as a stuck hover. */
+.nav-links a:not(.btn).on {
+  position: relative;
+  color: var(--fg-default);
+  background: var(--accent-soft);
+  font-weight: var(--weight-semibold, 600);
+}
+.nav-links a:not(.btn).on svg { color: var(--accent); }
+.nav-links a:not(.btn).on::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -1px;
+  width: 1.125rem;
+  height: 2px;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  transform: translateX(-50%);
+}
+
+/* ---------- NAV RAIL (search · theme · star · CTA) ---------- */
+.nav-rail {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--control-md, 2.25rem);
+  height: var(--control-md, 2.25rem);
+  flex: none;
+  padding: 0;
+  border: var(--border-hair, 1px) solid transparent;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--fg-muted);
+  cursor: pointer;
+  transition: var(--t-colors);
+}
+.icon-btn:hover { color: var(--fg-default); background: var(--hover-wash); }
+.icon-btn:focus-visible { border-color: var(--focus-ring); }
+
+/* The field grows out of the button rather than pushing the layout around. */
+.nav-search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  border-radius: var(--radius-pill);
+  transition: var(--t-colors);
+}
+.nav-search.open {
+  border: var(--border-hair, 1px) solid var(--line-default);
+  background: var(--bg-surface);
+  padding-right: var(--space-2);
+}
+.nav-search input {
+  width: 0;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-size: var(--text-sm);
+  color: var(--fg-default);
+  opacity: 0;
+  transition: width var(--dur-3, 320ms) var(--ease-out), opacity var(--dur-2, 200ms) var(--ease-out);
+}
+.nav-search.open input { width: 11rem; opacity: 1; }
+.nav-search input:focus { outline: none; }
+
+.star-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: var(--control-md, 2.25rem);
+  padding-inline: var(--space-3);
+  border: var(--border-hair, 1px) solid var(--line-default);
+  border-radius: var(--radius-pill);
+  background: var(--bg-surface);
+  color: var(--fg-default);
+  text-decoration: none;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium, 500);
+  transition: var(--t-colors);
+}
+.star-btn:hover { border-color: var(--line-strong); background: var(--bg-sunken); color: var(--fg-default); }
+.star-count {
+  font-family: var(--font-slate);
+  font-size: var(--text-xs);
+  color: var(--fg-muted);
+  padding-left: var(--space-2);
+  border-left: var(--border-hair, 1px) solid var(--line-default);
+}
+
+/* Shed the rail from the outside in as space runs out; the brand and the
+   search button are the last things standing. */
+@media (max-width: 1180px) {
+  .nav-links a:not(.btn) { font-size: var(--text-sm); padding-inline: var(--space-3); gap: var(--space-1); }
+  .star-label { display: none; }
+}
+/* Labels beat icons when only one can fit. */
+@media (max-width: 1040px) {
+  .nav-links a:not(.btn) svg { display: none; }
+}
+@media (max-width: 880px) {
+  .nav { grid-template-columns: auto 1fr auto; }
+  .nav-links { display: none; }
+  .nav-rail { grid-column: 3; }
+}
+@media (max-width: 620px) {
+  .star-btn, .nav-cta { display: none; }
+  .nav-search.open input { width: 8rem; }
 }
 
 /* ---------- BUTTONS ----------
-   The CDS .btn base (shape, focus, the 1px press) comes from creator.css.
-   NAC's historical modifiers map onto the system's intents: bare .btn is
-   primary — the accent is the one thing to press. */
+   The .btn base (shape, sizes, the 1px press) lives in base.css; this is only
+   the paint. Bare .btn is primary — the accent is the one thing to press. */
 .btn {
   background: var(--accent);
   color: var(--fg-on-accent);
@@ -154,6 +281,78 @@ a:hover { color: var(--fg-link-hover); }
   -webkit-mask-image: radial-gradient(1000px 520px at 50% 0%, #000 0%, transparent 74%);
   mask-image: radial-gradient(1000px 520px at 50% 0%, #000 0%, transparent 74%);
   pointer-events: none;
+}
+/* Inner pages don't need a full-viewport hero. */
+.hero.short { min-height: 0; }
+.hero.short .hero-inner { padding-block: var(--space-14, 3.5rem) var(--space-10); }
+
+/* ---------- SPLIT HERO (homepage) ----------
+   Copy left, the running widget right. The dot-grid mask above is centred on
+   the page, so the stage sits inside it rather than fighting it. */
+.hero.split {
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  place-items: center;
+  gap: var(--space-10);
+  align-content: center;
+  max-width: 76rem;
+  margin: 0 auto;
+  padding: var(--space-16) var(--gutter, 1.25rem) var(--space-14, 3.5rem);
+  border-bottom: none;
+}
+.hero.split .hero-copy {
+  position: relative;
+  z-index: 1;
+  text-align: left;
+  max-width: 34rem;
+}
+/* The full-bleed hero sizes h1 to the viewport; in the split it only owns
+   half the width, so it needs its own (smaller) ceiling or it wraps to three
+   ragged lines. */
+.hero.split h1 {
+  margin-bottom: var(--space-4);
+  font-size: clamp(2.5rem, 4.4vw, 3.75rem);
+  line-height: 1.02;
+}
+.hero.split .lede { margin-inline: 0; }
+.hero.split .hero-cta { justify-content: flex-start; }
+.hero.split .manifesto { margin-inline: 0; text-align: left; }
+
+.hero-stage {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+}
+.hero-stage-frame {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  min-height: 20rem;
+  padding: var(--space-8) var(--space-6);
+  border: var(--border-hair, 1px) solid var(--line-default);
+  border-radius: var(--radius-2xl, 24px);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-2);
+}
+.hero-stage-cap {
+  font-family: var(--font-slate);
+  font-size: var(--text-xs);
+  letter-spacing: 0.04em;
+  color: var(--fg-subtle);
+}
+@media (max-width: 900px) {
+  .hero.split {
+    grid-template-columns: 1fr;
+    gap: var(--space-8);
+    padding-top: var(--space-12);
+  }
+  .hero.split .hero-copy { text-align: center; max-width: 40rem; }
+  .hero.split .lede { margin-inline: auto; }
+  .hero.split .hero-cta { justify-content: center; }
+  .hero.split .manifesto { text-align: left; margin-inline: auto; }
 }
 .hero-inner {
   position: relative;
@@ -332,6 +531,20 @@ a:hover { color: var(--fg-link-hover); }
   grid-template-columns: repeat(3, 1fr);
   gap: var(--space-4);
 }
+.steps.four { grid-template-columns: repeat(4, 1fr); }
+/* A step can be a link (step 1 → the verifier); it must read like its siblings. */
+a.step {
+  text-decoration: none;
+  color: var(--fg-default);
+  transition: var(--t-colors), var(--t-transform), var(--t-shadow);
+}
+@media (hover: hover) and (pointer: fine) {
+  a.step:hover {
+    transform: translate3d(0, -3px, 0);
+    border-color: var(--line-strong);
+    box-shadow: var(--shadow-2);
+  }
+}
 .step {
   background: var(--bg-surface);
   border: var(--border-hair, 1px) solid var(--line-default);
@@ -413,7 +626,11 @@ a:hover { color: var(--fg-link-hover); }
   border-color: var(--ink-700);
 }
 
-label {
+/* Form field captions — the small mono labels above builder inputs. Scoped to
+   `.card` so it can't reach labels that wrap a control instead of captioning
+   one (the browse checkboxes are <label>s too, and they are sentence case). */
+.card > label,
+.card > div > label {
   display: block;
   font-family: var(--font-slate);
   font-size: var(--text-xs);
@@ -423,7 +640,8 @@ label {
   color: var(--fg-muted);
   margin: var(--space-4) 0 var(--space-2);
 }
-label:first-child { margin-top: 0; }
+.card > label:first-child,
+.card > div > label:first-child { margin-top: 0; }
 input,
 select,
 textarea {
@@ -591,13 +809,16 @@ pre {
 }
 .footer strong { color: var(--fg-default); }
 
-/* ---------- STORY MODAL (slides + TTS) ---------- */
+/* ---------- STORY PLAYER (16:9 scene slideshow + TTS) ----------
+   A fixed 16:9 canvas: animated SVG art on the left, type that rises in on
+   the right. Every scene remounts on change, so the keyframes below replay
+   from frame 0 without any JS driving them. */
 .story-back {
   position: fixed;
   inset: 0;
   z-index: var(--z-modal, 1000);
   background: var(--bg-scrim);
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -606,81 +827,191 @@ pre {
 }
 @keyframes fadeIn { from { opacity: 0; } }
 .story {
-  position: relative;
-  background: var(--bg-raised);
-  border: var(--border-hair, 1px) solid var(--line-default);
-  border-radius: var(--radius-sheet, 24px);
   width: 100%;
-  max-width: 29rem;
-  padding: var(--space-5) var(--space-6) var(--space-6);
-  box-shadow: var(--shadow-4);
+  max-width: 60rem;
   animation: rise var(--dur-3, 320ms) var(--ease-out);
 }
 @keyframes rise {
-  from { transform: translateY(16px) scale(0.97); opacity: 0; }
+  from { transform: translateY(16px) scale(0.985); opacity: 0; }
 }
-.story-bar { display: flex; gap: var(--space-2); margin-bottom: var(--space-5); }
-.story-bar .seg {
-  flex: 1;
-  height: 4px;
-  border-radius: var(--radius-pill);
-  background: var(--bg-muted);
+
+.story-canvas {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  width: 100%;
   overflow: hidden;
+  background: var(--bg-raised);
+  border: var(--border-hair, 1px) solid var(--line-default);
+  border-radius: var(--radius-sheet, 24px);
+  box-shadow: var(--shadow-4);
 }
-.story-bar .seg.on { background: var(--accent); transition: background var(--dur-3, 320ms) var(--ease-out); }
+/* Same dot grid as the hero, so the player reads as part of the site. */
+.story-canvas::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(var(--pattern-ink) 1px, transparent 1.4px);
+  background-size: 22px 22px;
+  -webkit-mask-image: radial-gradient(70% 60% at 22% 45%, #000 0%, transparent 72%);
+  mask-image: radial-gradient(70% 60% at 22% 45%, #000 0%, transparent 72%);
+  pointer-events: none;
+}
+
+.story-scene {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  align-items: center;
+  gap: clamp(var(--space-4), 3vw, var(--space-10));
+  height: 100%;
+  padding: clamp(var(--space-5), 4vw, var(--space-10));
+  padding-bottom: clamp(var(--space-8), 6vw, var(--space-12));
+}
+
+/* ---------- the art half ---------- */
+.scene-art {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  color: var(--fg-default);
+}
+.scene-art svg {
+  width: 100%;
+  height: 100%;
+  max-height: 100%;
+  overflow: visible;
+}
+.scene-art .accent,
+.scene-art .accent-stroke { stroke: var(--accent); }
+.scene-art .muted-stroke { stroke: var(--fg-subtle); }
+
+/* One dash rule draws every stroke, short or long, because each path
+   declares pathLength="100". */
+.scene-art .draw {
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: sceneDraw 900ms var(--ease-out) forwards;
+}
+@keyframes sceneDraw { to { stroke-dashoffset: 0; } }
+
+.scene-art .pop {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: scenePop 520ms var(--ease-out) forwards;
+}
+@keyframes scenePop {
+  from { opacity: 0; transform: translateY(10px) scale(0.94); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* The seal presses down once, the way a real stamp lands. */
+.scene-art .press {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: scenePress 700ms var(--ease-out) 1250ms both;
+}
+@keyframes scenePress {
+  0%   { transform: none; }
+  45%  { transform: scale(0.94); }
+  100% { transform: none; }
+}
+.scene-art .spin {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: sceneDraw 900ms var(--ease-out) forwards, sceneSpin 22s linear infinite;
+}
+@keyframes sceneSpin { to { transform: rotate(360deg); } }
+
+/* ---------- the type half ---------- */
+.scene-type { min-width: 0; }
+.scene-kicker {
+  display: inline-block;
+  font-family: var(--font-slate);
+  font-size: var(--text-xs);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: var(--space-3);
+  animation: lineIn 460ms var(--ease-out) both;
+}
+.scene-title {
+  margin: 0 0 var(--space-4);
+  font-size: clamp(1.5rem, 4.2vw, 2.75rem);
+  line-height: 1.06;
+  letter-spacing: -0.035em;
+  font-weight: var(--weight-semibold, 600);
+}
+/* Each line masks its own rise, so the type unrolls instead of fading. */
+.scene-title .line { display: block; overflow: hidden; }
+.scene-title .line-in { display: block; animation: lineIn 620ms var(--ease-out) both; }
+@keyframes lineIn {
+  from { opacity: 0; transform: translateY(105%); }
+  to   { opacity: 1; transform: none; }
+}
+.scene-body {
+  margin: 0;
+  max-width: 26rem;
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  color: var(--fg-muted);
+  animation: lineIn 620ms var(--ease-out) both;
+}
+
+/* ---------- chrome ---------- */
 .story-x {
   position: absolute;
   top: var(--space-4);
   right: var(--space-4);
+  z-index: 2;
+  display: inline-flex;
+  line-height: 0;
+  padding: var(--space-2);
   border: none;
+  border-radius: var(--radius-pill);
   background: transparent;
-  font-size: 1rem;
   color: var(--fg-subtle);
   cursor: pointer;
+  transition: var(--t-colors);
 }
-.story-stage {
-  text-align: center;
-  padding: var(--space-3) var(--space-1) var(--space-2);
-  animation: slideIn var(--dur-3, 320ms) var(--ease-out);
-}
-@keyframes slideIn {
-  from { opacity: 0; transform: translateX(16px); }
-}
-.story-emoji {
-  width: 5.5rem;
-  height: 5.5rem;
-  border-radius: var(--radius-2xl, 24px);
+.story-x:hover { color: var(--fg-default); background: var(--hover-wash); }
+
+.story-bar {
+  position: absolute;
+  left: clamp(var(--space-5), 4vw, var(--space-10));
+  right: clamp(var(--space-5), 4vw, var(--space-10));
+  bottom: var(--space-5);
+  z-index: 2;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 2.8rem;
-  margin: 0 auto var(--space-4);
-  box-shadow: inset 0 0 0 1px var(--line-subtle);
-  animation: bob 2.4s var(--ease-inout) infinite;
+  gap: var(--space-2);
 }
-@keyframes bob { 50% { transform: translateY(-7px); } }
-@media (prefers-reduced-motion: reduce) {
-  .story-emoji { animation: none; }
+.story-bar .seg {
+  flex: 1;
+  height: 3px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--bg-muted);
+  cursor: pointer;
 }
-.story-stage h2 { font-size: var(--text-2xl); margin: 0 0 var(--space-3); }
-.story-stage p {
-  font-size: var(--text-sm);
-  color: var(--fg-muted);
-  margin: 0 auto;
-  max-width: 21rem;
-  line-height: 1.55;
-}
+.story-bar .seg.on { background: var(--accent); transition: background var(--dur-3, 320ms) var(--ease-out); }
+
 .story-controls {
   display: flex;
   gap: var(--space-2);
   align-items: center;
-  margin-top: var(--space-6);
+  margin-top: var(--space-4);
 }
 .sc {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
   border: var(--border-hair, 1px) solid var(--line-default);
   background: var(--bg-surface);
   border-radius: var(--radius-control, 8px);
-  padding: var(--space-2) var(--space-3);
+  padding: var(--space-2) var(--space-4);
   font-size: var(--text-xs);
   font-weight: var(--weight-semibold, 600);
   cursor: pointer;
@@ -691,9 +1022,45 @@ pre {
 .sc:disabled { opacity: 0.4; cursor: default; }
 .sc:not(:disabled):hover { border-color: var(--line-strong); background: var(--bg-sunken); }
 .sc:active { transform: translateY(1px); }
-.sc.mute { flex: 1; text-align: center; }
+.sc.mute { flex: 1; }
 .sc.primary { background: var(--accent); color: var(--fg-on-accent); border-color: var(--accent); }
 .sc.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+
+/* Below the fold of a phone the split stops working — stack art over type. */
+@media (max-width: 720px) {
+  .story-canvas { aspect-ratio: 4 / 5; }
+  .story-scene {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 1fr) auto;
+    text-align: left;
+  }
+  .scene-art { max-height: 40vh; }
+}
+
+/* Motion is the whole point here, so reduced-motion gets the finished
+   frame rather than a stripped-down version of the animation. */
+@media (prefers-reduced-motion: reduce) {
+  .story-back,
+  .story,
+  .scene-kicker,
+  .scene-body,
+  .scene-title .line-in {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+  .scene-art .draw {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+  .scene-art .pop,
+  .scene-art .press,
+  .scene-art .spin {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
 
 /* ---------- ELIGIBILITY ---------- */
 .elig-grid {
@@ -897,17 +1264,7 @@ pre {
   gap: var(--space-3);
   margin-bottom: var(--space-7, 1.75rem);
 }
-.filter-row { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
-.flabel {
-  font-family: var(--font-slate);
-  font-size: var(--text-xs);
-  font-weight: var(--weight-semibold, 600);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--fg-subtle);
-  margin-right: var(--space-1);
-}
-/* .chip base comes from the CDS; the `on` state follows the system's
+/* .chip base lives in base.css; the `on` state follows the system's
    pressed-chip convention: inverse, not accent-filled. */
 .chip { text-decoration: none; }
 .chip.on {
@@ -917,80 +1274,151 @@ pre {
 }
 button.chip { cursor: pointer; font-family: inherit; height: auto; padding-block: 5px; }
 
-/* ---------- DIRECTORY SIDEBAR ---------- */
+/* ---------- BROWSE SIDEBAR ----------
+   A single rail that scrolls with the page until it reaches the nav, then
+   sticks. Inside it: search, two collapsible facet groups, and the rules
+   note — the question a reader browsing this list actually has. */
 .dir-layout {
   display: grid;
-  grid-template-columns: 230px 1fr;
+  grid-template-columns: 264px minmax(0, 1fr);
   gap: var(--space-8);
   align-items: start;
 }
 .dir-side {
   position: sticky;
-  top: 5.25rem;
+  top: calc(var(--nav-h) + var(--space-4));
+  /* Never taller than the viewport — the rail scrolls internally instead of
+     stranding the rules note below the fold. */
+  max-height: calc(100svh - var(--nav-h) - var(--space-8));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+.dir-side-inner {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-3);
+  padding-right: var(--space-1);
+}
+
+/* Search — the icon sits inside the field rather than beside it. */
+.side-search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-inline: var(--space-3);
+  border: var(--border-hair, 1px) solid var(--line-default);
+  border-radius: var(--radius-control, 8px);
   background: var(--bg-surface);
+  transition: var(--t-colors);
+}
+.side-search:focus-within { border-color: var(--accent); }
+.side-search > svg { flex: none; color: var(--fg-subtle); }
+.side-search input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: var(--space-2) 0;
+  font-size: var(--text-sm);
+}
+.side-search input:focus-visible { outline: none; }
+.side-search input::-webkit-search-cancel-button { filter: grayscale(1); }
+
+/* ---------- facet groups ---------- */
+.facet {
   border: var(--border-hair, 1px) solid var(--line-default);
   border-radius: var(--radius-card, 16px);
-  padding: var(--space-4);
+  background: var(--bg-surface);
+  overflow: hidden;
 }
-.dir-search-input {
-  width: 100%;
-  padding: var(--space-2) var(--space-3);
-  font-size: var(--text-sm);
-  border-radius: var(--radius-control, 8px);
-  border: var(--border-hair, 1px) solid var(--line-default);
-  background: var(--bg-sunken);
-}
-.dir-search-input:focus {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: 1px;
-  border-color: transparent;
-}
-.facet {
-  border: none;
-  padding: 0;
-  margin: 0;
+.facet-head {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  background: transparent;
+  color: var(--fg-default);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold, 600);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: var(--t-colors);
 }
+.facet-head:hover { background: var(--hover-wash); }
+.facet-head > svg { flex: none; color: var(--fg-subtle); }
+.facet-legend { flex: 1; text-align: left; }
+.facet-badge {
+  flex: none;
+  min-width: 1.25rem;
+  padding: 1px 6px;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  color: var(--fg-on-accent);
+  font-family: var(--font-slate);
+  font-size: 0.625rem;
+  letter-spacing: 0;
+}
+/* The chevron points at what the click will do. */
+.facet-head > svg:last-child {
+  transition: transform var(--dur-2, 200ms) var(--ease-out);
+  transform: rotate(-90deg);
+}
+.facet.open .facet-head > svg:last-child { transform: none; }
+
 .facet-list {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  max-height: 236px;
+  gap: 1px;
+  max-height: 15rem;
   overflow-y: auto;
-  overscroll-behavior: contain;
+  padding: 0 var(--space-2) var(--space-2);
+  scrollbar-width: thin;
 }
-.cbx.empty .cbx-label { color: var(--fg-subtle); }
-.facet legend {
-  font-family: var(--font-slate);
-  font-size: var(--text-xs);
-  font-weight: var(--weight-semibold, 600);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--fg-subtle);
-  margin-bottom: var(--space-2);
-}
+
+/* ---------- checkbox rows ----------
+   The native input stays in the DOM (it is the accessible control and the
+   focus target) but is visually replaced by .cbx-box, which can actually be
+   styled to match the seal green. */
 .cbx {
   display: flex;
   align-items: center;
-  gap: 9px;
-  padding: var(--space-1) var(--space-2);
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-2);
   border-radius: var(--radius-control, 8px);
   cursor: pointer;
   font-size: var(--text-sm);
+  transition: var(--t-colors);
 }
 .cbx:hover { background: var(--hover-wash); }
 .cbx input {
-  accent-color: var(--accent);
-  width: 15px;
-  height: 15px;
-  cursor: pointer;
-  flex: 0 0 auto;
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.cbx-box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  border: var(--border-hair, 1px) solid var(--line-strong);
+  border-radius: var(--radius-sm, 4px);
+  background: var(--bg-canvas);
+  color: transparent;
+  transition: var(--t-colors);
+}
+.cbx input:checked + .cbx-box {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--fg-on-accent);
+}
+.cbx input:focus-visible + .cbx-box {
+  outline: var(--border-2, 2px) solid var(--focus-ring);
+  outline-offset: 2px;
 }
 .cbx-label {
   flex: 1;
@@ -1000,6 +1428,7 @@ button.chip { cursor: pointer; font-family: inherit; height: auto; padding-block
   white-space: nowrap;
 }
 .cbx-count {
+  flex: none;
   font-family: var(--font-slate);
   font-size: var(--text-xs);
   color: var(--fg-subtle);
@@ -1007,6 +1436,88 @@ button.chip { cursor: pointer; font-family: inherit; height: auto; padding-block
   border-radius: var(--radius-pill);
   padding: 1px 8px;
 }
+/* Nothing listed under it yet — still selectable, just not advertised. */
+.cbx.empty .cbx-label { color: var(--fg-subtle); }
+.cbx.empty .cbx-count { opacity: 0.55; }
+
+.side-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-hair, 1px) solid var(--line-default);
+  border-radius: var(--radius-control, 8px);
+  background: var(--bg-surface);
+  color: var(--fg-muted);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium, 500);
+  cursor: pointer;
+  transition: var(--t-colors);
+}
+.side-clear:hover { color: var(--fg-default); border-color: var(--line-strong); }
+.side-clear > svg { flex: none; }
+
+/* ---------- the rules note ---------- */
+.side-note {
+  border: var(--border-hair, 1px) solid var(--line-default);
+  border-radius: var(--radius-card, 16px);
+  background: var(--bg-sunken);
+  padding: var(--space-4);
+  font-size: var(--text-xs);
+  line-height: 1.55;
+  color: var(--fg-muted);
+}
+.side-note-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+  color: var(--fg-default);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold, 600);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.side-note-head > svg { flex: none; color: var(--accent); }
+.side-note p { margin: 0 0 var(--space-3); }
+.side-rules {
+  list-style: none;
+  margin: 0 0 var(--space-3);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.side-rules li { display: flex; align-items: center; gap: var(--space-2); }
+.side-rules li > svg { flex: none; }
+.side-rules li:first-child > svg { color: var(--success-line); }
+.side-rules li:last-child > svg { color: var(--danger-line); }
+.side-note-foot { color: var(--fg-subtle); }
+.side-note-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--accent);
+  font-weight: var(--weight-medium, 500);
+  text-decoration: none;
+}
+.side-note-link:hover { text-decoration: underline; }
+.side-note-link > svg { flex: none; }
+
+/* An inline button that has to read as a link (the "clear filters" escape
+   hatch inside a sentence). */
+.link-btn {
+  border: none;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  color: var(--accent);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.link-btn:hover { color: var(--accent-hover); }
+
 .dir-count { font-size: var(--text-xs); margin: 0 0 var(--space-3); }
 .dir-desc {
   display: -webkit-box;
@@ -1018,26 +1529,17 @@ button.chip { cursor: pointer; font-family: inherit; height: auto; padding-block
   margin: 2px 0;
 }
 .dir-sub { font-size: var(--text-xs); }
+
+/* Below the split, the rail becomes a normal block above the results. */
 @media (max-width: 900px) {
   .dir-layout { grid-template-columns: 1fr; gap: var(--space-5); }
-  .dir-side {
-    position: static;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--space-3);
-  }
-  .dir-search-input,
-  .dir-side .link-btn { grid-column: 1 / -1; }
-  .facet-list { max-height: 180px; }
+  .dir-side { position: static; max-height: none; overflow: visible; }
+  .dir-side-inner { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+  .side-search, .side-clear, .side-note { grid-column: 1 / -1; }
+  .facet-list { max-height: 12rem; }
 }
-.link-btn {
-  border: none;
-  background: transparent;
-  padding: 0;
-  font: inherit;
-  color: var(--fg-accent);
-  text-decoration: underline;
-  cursor: pointer;
+@media (max-width: 560px) {
+  .dir-side-inner { grid-template-columns: 1fr; }
 }
 
 /* ---------- DIRECTORY GRID ---------- */
@@ -1081,7 +1583,7 @@ button.chip { cursor: pointer; font-family: inherit; height: auto; padding-block
   text-overflow: ellipsis;
 }
 .dir-meta .muted { font-size: var(--text-xs); }
-.dir-arrow { color: var(--fg-subtle); font-size: 1rem; }
+.dir-arrow { color: var(--fg-subtle); display: inline-flex; align-items: center; flex: none; }
 
 /* ---------- DASHBOARD ---------- */
 .container {
@@ -1185,6 +1687,161 @@ td { font-variant-numeric: tabular-nums; }
   color: var(--accent);
 }
 
+/* ---------- SHARE GRID ----------
+   15 quiet tiles, monogram glyphs instead of 15 brand colours — the system
+   stays monochrome and the accent stays rationed. */
+.share-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
+  gap: var(--space-3);
+  max-width: 60rem;
+  margin: 0 auto;
+}
+.share-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-2);
+  background: var(--bg-surface);
+  border: var(--border-hair, 1px) solid var(--line-default);
+  border-radius: var(--radius-card, 16px);
+  text-decoration: none;
+  color: var(--fg-default);
+  cursor: pointer;
+  font: inherit;
+  transition: var(--t-colors), var(--t-transform), var(--t-shadow);
+}
+@media (hover: hover) and (pointer: fine) {
+  .share-tile:hover {
+    transform: translate3d(0, -2px, 0);
+    border-color: var(--line-strong);
+    box-shadow: var(--shadow-2);
+    color: var(--fg-default);
+  }
+  .share-tile:hover .share-glyph {
+    background: var(--accent-soft);
+    color: var(--accent-soft-fg);
+  }
+}
+.share-glyph {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--radius-md);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-slate);
+  font-weight: var(--weight-semibold, 600);
+  font-size: 1.05rem;
+  background: var(--bg-muted);
+  color: var(--fg-muted);
+  transition: var(--t-colors);
+}
+.share-label {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium, 500);
+  color: var(--fg-muted);
+}
+
+/* ---------- PULSE (visits + poll) ---------- */
+.pulse {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-5);
+  max-width: 52rem;
+  margin: 0 auto;
+  align-items: stretch;
+}
+.pulse-stat {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-1);
+  background: var(--bg-inverse);
+  color: var(--fg-on-inverse);
+  border-radius: var(--radius-card, 16px);
+  padding: var(--space-6) var(--space-8);
+  text-align: center;
+}
+.pulse-num {
+  font-family: var(--font-display);
+  font-size: var(--text-4xl, 2.5rem);
+  font-weight: var(--weight-bold, 700);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.pulse-lbl {
+  font-family: var(--font-slate);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  opacity: 0.7;
+}
+.pulse-poll {
+  background: var(--bg-surface);
+  border: var(--border-hair, 1px) solid var(--line-default);
+  border-radius: var(--radius-card, 16px);
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-3);
+}
+.pulse-q {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--weight-semibold, 600);
+  font-size: var(--text-base);
+}
+.pulse-btns {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  flex-wrap: wrap;
+}
+.pulse-hint { font-size: var(--text-xs); }
+.pulse-bar {
+  height: 10px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-muted);
+  overflow: hidden;
+}
+.pulse-fill {
+  height: 100%;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  transition: width var(--dur-4, 560ms) var(--ease-out);
+}
+.pulse-result { margin: 0; font-size: var(--text-sm); }
+
+/* ---------- THIRD-PARTY CROSS-CHECK ---------- */
+.xcheck {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+.xcheck-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-4);
+  border: var(--border-hair, 1px) solid var(--line-default);
+  border-radius: var(--radius-pill);
+  background: var(--bg-surface);
+  text-decoration: none;
+  color: var(--fg-default);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium, 500);
+  transition: var(--t-colors);
+}
+.xcheck-link:hover {
+  border-color: var(--line-strong);
+  background: var(--bg-sunken);
+  color: var(--fg-default);
+}
+
 /* ---------- SCROLL REVEAL ----------
    Honest motion: 16px of travel, the system's easing, resting state is the
    finished state. The observer in page code adds `.in`; without JS (or with
@@ -1200,11 +1857,155 @@ td { font-variant-numeric: tabular-nums; }
   .reveal { opacity: 1; transform: none; transition: none; }
 }
 
+/* ---------- SCROLL ART ----------
+   Line drawings that draw themselves when scrolled to. Same trick as the
+   story scenes — pathLength="100" normalises every stroke so one dash rule
+   paces a 20px tick and a 400px wave identically — but held at frame 0 until
+   the wrapper gets `.in` from its IntersectionObserver.
+
+   The strokes are doing an argument, not decoration: `.art-ghost` is the
+   machine (thin, exact, repeating), `.art-hand` is the person (thicker,
+   slightly off), and the accent marks the choice only a human makes. */
+.scroll-art {
+  width: 100%;
+  max-width: 34rem;
+  margin: var(--space-10) auto 0;
+  color: var(--fg-subtle);
+}
+.scroll-art.tight { max-width: 15rem; }
+.scroll-art svg { width: 100%; height: auto; overflow: visible; }
+
+.scroll-art .art-line {
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+}
+.scroll-art.in .art-line {
+  animation: artDraw var(--dur-4, 560ms) var(--ease-out) forwards;
+}
+@keyframes artDraw { to { stroke-dashoffset: 0; } }
+
+/* the machine's marks: hairline, uniform, faintly there */
+.scroll-art .art-ghost { stroke-width: 1.2; opacity: 0.5; }
+/* the human's: full weight, and it stays */
+.scroll-art .art-hand { stroke-width: 2.4; color: var(--fg-default); stroke: var(--fg-default); }
+.scroll-art .art-accent { stroke: var(--accent); }
+.scroll-art .art-chosen { stroke: var(--accent); }
+
+.scroll-art .art-machine { opacity: 0.55; }
+.scroll-art .art-machine .art-line { stroke-width: 1.4; }
+
+.scroll-art .art-dot {
+  fill: var(--accent);
+  stroke: none;
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.scroll-art.in .art-dot { animation: artPop 420ms var(--ease-out) forwards; }
+@keyframes artPop {
+  from { opacity: 0; transform: scale(0.4); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* the seal presses once, after its rings finish */
+.scroll-art .art-press { transform-box: fill-box; transform-origin: center; }
+.scroll-art.in .art-press { animation: artPress 620ms var(--ease-out) 1100ms both; }
+@keyframes artPress {
+  0%   { transform: none; }
+  45%  { transform: scale(0.95); }
+  100% { transform: none; }
+}
+.scroll-art.in .art-spin {
+  animation: artDraw var(--dur-4, 560ms) var(--ease-out) forwards,
+    artSpin 26s linear infinite;
+}
+@keyframes artSpin { to { transform: rotate(360deg); } }
+
+/* Reduced motion gets the finished drawing, not a missing one. */
+@media (prefers-reduced-motion: reduce) {
+  .scroll-art .art-line { stroke-dashoffset: 0; animation: none !important; }
+  .scroll-art .art-dot { opacity: 1; animation: none !important; }
+  .scroll-art .art-press,
+  .scroll-art .art-spin { animation: none !important; transform: none; }
+}
+
+/* ---------- ICONOGRAPHY ----------
+   Every icon is an inline SVG drawing itself in `currentColor`, so the slot
+   sets the color and the icon obeys. These rules only handle *alignment* —
+   optical centering next to text — since text and SVG sit on different
+   baselines. Anything that mixes a glyph with a label gets inline-flex. */
+.btn,
+.sc,
+.pill-tag,
+.xcheck-link {
+  gap: var(--space-2);
+}
+/* Icons never absorb the shrink when a flex row runs out of room — without
+   this the nav's octocat collapses to 0px the moment the search field opens. */
+.btn > svg,
+.sc > svg,
+.pill-tag > svg,
+.xcheck-link > svg,
+.star-btn > svg {
+  flex: none;
+}
+.sc {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Round icon plates: the tinted square behind a section icon. */
+.why-card .ico {
+  color: var(--accent-soft-fg, var(--accent));
+}
+.cta-emoji {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+}
+
+/* Verdict + eligibility headings: icon takes the tone color of its card. */
+.verdict .ve {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+}
+.verdict.ok .ve { color: var(--success-fg, var(--success-line)); }
+.verdict.warn .ve { color: var(--warning-fg, var(--warning-line)); }
+.verdict.no .ve { color: var(--danger-fg, var(--danger-line)); }
+.elig-card h2 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.elig-card.ok h2 svg { color: var(--success-fg, var(--success-line)); }
+.elig-card.no h2 svg { color: var(--danger-fg, var(--danger-line)); }
+
+/* Icons sitting *inside* a run of prose stay in the text flow — going flex
+   here would insert gaps around every text node, e.g. a space before the
+   full stop after <strong>. The design system resets svg to display:block
+   (base.css), so inline icons have to opt back in, then sit on the
+   text baseline. */
+.footer p svg,
+.footer a svg,
+.disclaimer svg {
+  display: inline-block;
+  vertical-align: -0.18em;
+}
+.cell-flag { display: inline-flex; align-items: center; gap: var(--space-1); }
+.story-x { display: inline-flex; line-height: 0; }
+
 /* ---------- RESPONSIVE ---------- */
 input,
 select,
 textarea,
 button { max-width: 100%; }
+
+@media (max-width: 1000px) {
+  .steps.four { grid-template-columns: repeat(2, 1fr); }
+}
 
 @media (max-width: 820px) {
   .builder,
@@ -1214,12 +2015,13 @@ button { max-width: 100%; }
   .two-cta,
   .why-grid,
   .steps,
+  .steps.four,
+  .pulse,
   .stat-grid,
   .row { grid-template-columns: 1fr; }
   .section { padding: var(--space-10) var(--space-4); }
   .statement { padding: var(--space-16) var(--space-4); }
   .hero-inner { padding: var(--space-12) var(--space-4) var(--space-10); }
-  .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   table { min-width: 520px; }
 }
 

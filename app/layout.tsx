@@ -1,11 +1,14 @@
 import type { Metadata, Viewport } from "next";
-import "./creator.css";
+import "./base.css";
+import "./nac-theme.css";
 import "./globals.css";
+import SiteNav from "./components/SiteNav";
+import SiteFooter from "./components/SiteFooter";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://nac.imswarnil.com";
 const TITLE = "NAC — No AI Content · the human-written badge for your site";
 const DESCRIPTION =
-  "NAC (No AI Content) is a free, open-source embeddable badge that lets authors declare their content is human-written — AI used only to refine, never to generate. Add the notary-style stamp to your blog and join a public directory of humans who still write by hand.";
+  "NAC (No AI Content) is a free, open-source embeddable badge that lets authors declare their content is human-written — AI used only to refine, never to generate. Add the notary-style stamp to your blog and join a public, browsable roll of humans who still write by hand.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -45,6 +48,11 @@ export const metadata: Metadata = {
     follow: true,
     googleBot: { index: true, follow: true, "max-image-preview": "large" },
   },
+  icons: {
+    icon: "/icon.svg",
+    shortcut: "/icon.svg",
+    apple: "/icon.svg",
+  },
   category: "technology",
 };
 
@@ -75,14 +83,14 @@ const JSON_LD = {
       name: "NAC — No AI Content",
       alternateName: "NAC",
       url: SITE_URL,
-      logo: `${SITE_URL}/icon.svg`,
+      logo: `${SITE_URL}/logo.svg`,
     },
   ],
 };
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: light)", color: "#fdfcf9" },
     { media: "(prefers-color-scheme: dark)", color: "#08080c" },
   ],
 };
@@ -95,14 +103,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
           rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Geist:wght@300..800&family=Geist+Mono:wght@400;500;600&display=swap"
         />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }}
         />
       </head>
-      <body>{children}</body>
+      <body>
+        <SiteNav />
+        {children}
+        <SiteFooter />
+      </body>
     </html>
   );
 }

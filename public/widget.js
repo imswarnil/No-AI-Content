@@ -24,24 +24,31 @@
     "data-message",
     "Written by a human. AI is used only to refine ideas — never to generate."
   );
-  var style = attr("data-style", "stamp").toLowerCase(); // stamp | banner | compact
+  // 9 styles: stamp · wax · passport · postmark · ribbon · certificate ·
+  //           typewriter · banner · compact
+  var style = attr("data-style", "stamp").toLowerCase();
   if (style === "badge") style = "stamp";
   var theme = attr("data-theme", "light").toLowerCase();
-  var link = attr("data-link", base + "/directory");
+  var link = attr("data-link", base + "/browse");
   var region = attr("data-region", "");
   var category = attr("data-category", "");
   var sizeAttr = parseInt(attr("data-size", ""), 10);
 
+  // NAC "Ink & Seal" palette — seal green ink pressed onto paper (light) or
+  // slate (dark). Overridable per-site via data-ink.
   var dark = theme === "dark";
-  var ink = attr("data-ink", dark ? "#4ade80" : "#15803d");
+  var ink = attr("data-ink", dark ? "#3db476" : "#157a45");
   var c = {
-    bg: dark ? "#0f172a" : "#ffffff",
-    fg: dark ? "#f8fafc" : "#0f172a",
-    sub: dark ? "#94a3b8" : "#64748b",
-    border: dark ? "#1e293b" : "#e5e7eb",
+    bg: dark ? "#101017" : "#fdfcf9",
+    fg: dark ? "#f1f1f4" : "#191922",
+    sub: dark ? "#a5a5b2" : "#76768a",
+    border: dark ? "#3c3c4e" : "#e9e4d5",
+    red: dark ? "#ff7a7a" : "#d92d2d",
+    redBg: dark ? "rgba(217,45,45,.14)" : "rgba(217,45,45,.07)",
   };
   var FONT = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
   var SERIF = "Georgia,'Times New Roman',serif";
+  var MONO = "'IBM Plex Mono',ui-monospace,'SF Mono',Menlo,monospace";
 
   var uid = (window.__nac_seq = (window.__nac_seq || 0) + 1);
   var year = new Date().getFullYear();
@@ -78,6 +85,24 @@
     }
     return d;
   }
+  /** Scalloped blob outline (wax seal edge). */
+  function scallop(cx, cy, R, lobes, depth) {
+    var d = "";
+    for (var a = 0; a <= 360; a += 2) {
+      var rad = (a * Math.PI) / 180;
+      var r = R + depth * Math.sin(lobes * rad);
+      var x = cx + r * Math.cos(rad);
+      var y = cy + r * Math.sin(rad);
+      d += (a === 0 ? "M" : "L") + x.toFixed(1) + " " + y.toFixed(1);
+    }
+    return d + "Z";
+  }
+  /** Tiny stable hash → zero-padded serial for the certificate style. */
+  function serial(s) {
+    var h = 5381;
+    for (var i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) >>> 0;
+    return ("000000" + (h % 1000000)).slice(-6);
+  }
 
   // Repeated microtext — reads as a solid hairline until you zoom in (like currency).
   var MICRO = "· NO AI CONTENT · VERIFIED HUMAN WRITING ";
@@ -87,13 +112,20 @@
     return esc(s);
   }
 
+  var pen =
+    '<g fill="none" stroke="INK" stroke-linejoin="round" stroke-linecap="round">' +
+    '<path stroke-width="3" d="M100 54 C106 54 111 66 111 78 L100 92 L89 78 C89 66 94 54 100 54 Z"/>' +
+    '<path stroke-width="2.4" d="M100 70 L100 89"/></g>' +
+    '<circle cx="100" cy="68" r="2.5" fill="INK"/>';
+
+  /* ---------------- 1 · Notary stamp (the signature seal) ---------------- */
   function stampSVG(px) {
     var topId = "nac-t-" + uid,
       botId = "nac-b-" + uid,
       micId = "nac-m-" + uid;
     var bottomText = author ? "BY " + author.toUpperCase() : "GENUINELY HUMAN";
     var R = 76;
-    var mR = 55; // microtext radius
+    var mR = 55;
     return (
       '<svg width="' + px + '" height="' + px + '" viewBox="0 0 200 200" ' +
       'xmlns="http://www.w3.org/2000/svg" role="img" ' +
@@ -105,42 +137,31 @@
       " 0 1 1 " + (100 + mR) + " 100 A " + mR + " " + mR + " 0 1 1 " + (100 - mR) + ' 100"/>' +
       "</defs>" +
       '<g transform="rotate(-7 100 100)">' +
-      // guilloché band (fine interfering wavy rings)
       '<g class="nac-guil" fill="none" stroke="' + ink + '" stroke-width="0.6" opacity="0.55">' +
       '<path pathLength="100" d="' + wavyRing(100, 100, 90, 2.6, 26, 0) + '"/>' +
       '<path pathLength="100" d="' + wavyRing(100, 100, 90, 2.6, 26, 0.6) + '"/>' +
       '<path pathLength="100" d="' + wavyRing(100, 100, 84, 1.8, 32, 0.3) + '"/>' +
       "</g>" +
-      // faint rosette behind the center
       '<path class="nac-rose" d="' + rosette(100, 100, 46, 6, 12, 7) + '" fill="none" stroke="' + ink +
       '" stroke-width="0.4" opacity="0.18"/>' +
-      // solid rings
       '<g fill="none" stroke="' + ink + '">' +
       '<circle class="nac-ring" pathLength="100" cx="100" cy="100" r="94" stroke-width="3.2"/>' +
       '<circle class="nac-ring" pathLength="100" cx="100" cy="100" r="80" stroke-width="1.2"/>' +
       '<circle class="nac-ring" pathLength="100" cx="100" cy="100" r="49" stroke-width="1.2"/>' +
       "</g>" +
-      // side ornaments
       '<g fill="' + ink + '">' +
       '<rect x="6.5" y="96.5" width="7" height="7" transform="rotate(45 10 100)"/>' +
       '<rect x="186.5" y="96.5" width="7" height="7" transform="rotate(45 190 100)"/>' +
       "</g>" +
-      // curved macro text
       '<g fill="' + ink + '" font-family="' + SERIF + '" font-weight="600">' +
       '<text font-size="15" letter-spacing="3">' +
       '<textPath href="#' + topId + '" startOffset="50%" text-anchor="middle">NO AI CONTENT</textPath></text>' +
       '<text font-size="12.5" letter-spacing="2.5">' +
       '<textPath href="#' + botId + '" startOffset="50%" text-anchor="middle">' + esc(bottomText) + "</textPath></text>" +
       "</g>" +
-      // microprint ring
       '<g class="nac-micro"><text fill="' + ink + '" font-family="' + FONT + '" font-size="3.1" letter-spacing="0.3" opacity="0.9">' +
       '<textPath href="#' + micId + '" startOffset="0">' + microString() + "</textPath></text></g>" +
-      // pen-nib emblem
-      '<g fill="none" stroke="' + ink + '" stroke-linejoin="round" stroke-linecap="round">' +
-      '<path stroke-width="3" d="M100 54 C106 54 111 66 111 78 L100 92 L89 78 C89 66 94 54 100 54 Z"/>' +
-      '<path stroke-width="2.4" d="M100 70 L100 89"/></g>' +
-      '<circle cx="100" cy="68" r="2.5" fill="' + ink + '"/>' +
-      // center wordmark (with NAC monogram)
+      pen.replace(/INK/g, ink) +
       '<g fill="' + ink + '" font-family="' + SERIF + '" text-anchor="middle">' +
       '<text x="100" y="105" font-size="7.5" font-weight="700" letter-spacing="4" opacity="0.9">N A C</text>' +
       '<text x="100" y="123" font-size="17" font-weight="700" letter-spacing="1">HUMAN</text>' +
@@ -150,48 +171,148 @@
     );
   }
 
+  /* ---------------- 2 · Wax seal — pressed, solid, molten edge ------------ */
+  function waxSVG(px) {
+    return (
+      '<svg width="' + px + '" height="' + px + '" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" ' +
+      'role="img" aria-label="No AI Content — sealed by a human">' +
+      '<g transform="rotate(-5 100 100)">' +
+      '<path d="' + scallop(100, 100, 86, 11, 7) + '" fill="' + ink + '" opacity="0.94"/>' +
+      '<path d="' + scallop(100, 100, 74, 11, 4) + '" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="1.4"/>' +
+      '<circle cx="100" cy="100" r="56" fill="none" stroke="rgba(255,255,255,.75)" stroke-width="1.6" stroke-dasharray="4 3"/>' +
+      pen.replace(/INK/g, "#fff").replace(/stroke-width="3"/, 'stroke-width="4"') +
+      '<g fill="#fff" font-family="' + SERIF + '" text-anchor="middle">' +
+      '<text x="100" y="112" font-size="13" font-weight="700" letter-spacing="4">N A C</text>' +
+      '<text x="100" y="130" font-size="9.5" font-weight="600" letter-spacing="1.6">HUMAN WRITTEN</text>' +
+      '<text x="100" y="146" font-size="7" letter-spacing="1.2" opacity="0.8">' + year + "</text>" +
+      "</g></g></svg>"
+    );
+  }
+
+  /* ---------------- 3 · Passport visa stamp --------------------------------- */
+  function passportSVG(w) {
+    var h = Math.round(w * 0.62);
+    var by = author ? esc(author.toUpperCase()) : "A HUMAN BEING";
+    return (
+      '<svg width="' + w + '" height="' + h + '" viewBox="0 0 240 148" xmlns="http://www.w3.org/2000/svg" ' +
+      'role="img" aria-label="No AI Content — entry granted, human writing">' +
+      '<g transform="rotate(-6 120 74)" fill="none" stroke="' + ink + '">' +
+      '<rect x="8" y="10" width="224" height="128" rx="10" stroke-width="3"/>' +
+      '<rect x="16" y="18" width="208" height="112" rx="6" stroke-width="1" stroke-dasharray="5 4"/>' +
+      "</g>" +
+      '<g transform="rotate(-6 120 74)" fill="' + ink + '" text-anchor="middle">' +
+      '<text x="120" y="42" font-family="' + MONO + '" font-size="10" letter-spacing="3" font-weight="600">✦ OPEN WEB · ADMITTED ✦</text>' +
+      '<text x="120" y="72" font-family="' + SERIF + '" font-size="21" font-weight="700" letter-spacing="2">NO AI CONTENT</text>' +
+      '<text x="120" y="94" font-family="' + MONO + '" font-size="9.5" letter-spacing="2">WRITTEN BY ' + by + "</text>" +
+      '<text x="120" y="118" font-family="' + MONO + '" font-size="9" letter-spacing="2" opacity="0.8">DATE OF ENTRY · ' + year + "</text>" +
+      "</g></svg>"
+    );
+  }
+
+  /* ---------------- 4 · Postmark — cancelled: machine-made ----------------- */
+  function postmarkSVG(w) {
+    var h = Math.round(w * 0.52);
+    var arcId = "nac-pm-" + uid;
+    return (
+      '<svg width="' + w + '" height="' + h + '" viewBox="0 0 250 130" xmlns="http://www.w3.org/2000/svg" ' +
+      'role="img" aria-label="No AI Content — hand-delivered writing">' +
+      "<defs>" +
+      '<path id="' + arcId + '" fill="none" d="M 22 65 A 43 43 0 0 1 108 65"/>' +
+      "</defs>" +
+      '<g fill="none" stroke="' + ink + '">' +
+      '<circle cx="65" cy="65" r="52" stroke-width="2.6"/>' +
+      '<circle cx="65" cy="65" r="44" stroke-width="1"/>' +
+      // cancellation waves
+      '<path stroke-width="2.2" d="M120 40 C150 34 180 46 240 40" opacity="0.85"/>' +
+      '<path stroke-width="2.2" d="M122 60 C152 54 182 66 242 60" opacity="0.85"/>' +
+      '<path stroke-width="2.2" d="M122 80 C152 74 182 86 242 80" opacity="0.85"/>' +
+      '<path stroke-width="2.2" d="M120 100 C150 94 180 106 240 100" opacity="0.85"/>' +
+      "</g>" +
+      '<g fill="' + ink + '" text-anchor="middle">' +
+      '<text font-family="' + MONO + '" font-size="9" letter-spacing="1.6" font-weight="600">' +
+      '<textPath href="#' + arcId + '" startOffset="50%" text-anchor="middle">HUMAN MAIL</textPath></text>' +
+      '<text x="65" y="62" font-family="' + SERIF + '" font-size="15" font-weight="700" letter-spacing="1">N A C</text>' +
+      '<text x="65" y="78" font-family="' + MONO + '" font-size="8" letter-spacing="1">' + year + "</text>" +
+      '<text x="65" y="97" font-family="' + MONO + '" font-size="7.5" letter-spacing="1.4" opacity="0.85">NO AI CONTENT</text>' +
+      "</g></svg>"
+    );
+  }
+
+  /* ---------------- 5 · Prize ribbon — 100% human -------------------------- */
+  function ribbonSVG(px) {
+    var h = Math.round(px * 1.28);
+    return (
+      '<svg width="' + px + '" height="' + h + '" viewBox="0 0 160 205" xmlns="http://www.w3.org/2000/svg" ' +
+      'role="img" aria-label="No AI Content — 100 percent human">' +
+      '<g fill="' + ink + '">' +
+      '<path d="M55 128 L44 198 L80 176 L116 198 L105 128 Z" opacity="0.55"/>' +
+      "</g>" +
+      '<path d="' + scallop(80, 78, 66, 12, 6) + '" fill="' + ink + '"/>' +
+      '<circle cx="80" cy="78" r="48" fill="none" stroke="rgba(255,255,255,.8)" stroke-width="1.6"/>' +
+      '<g fill="#fff" text-anchor="middle" font-family="' + SERIF + '">' +
+      '<text x="80" y="70" font-size="21" font-weight="700">100%</text>' +
+      '<text x="80" y="90" font-size="13" font-weight="600" letter-spacing="2">HUMAN</text>' +
+      '<text x="80" y="104" font-size="7" letter-spacing="1.6" opacity="0.85">NO AI CONTENT</text>' +
+      "</g></svg>"
+    );
+  }
+
+  /* ---------------- 6 · Certificate — serial-numbered ---------------------- */
+  function certSVG(w) {
+    var h = Math.round(w * 0.46);
+    var by = author ? esc(author.toUpperCase()) : "A HUMAN AUTHOR";
+    return (
+      '<svg width="' + w + '" height="' + h + '" viewBox="0 0 280 128" xmlns="http://www.w3.org/2000/svg" ' +
+      'role="img" aria-label="No AI Content — certificate of human writing">' +
+      '<g fill="none" stroke="' + ink + '">' +
+      '<rect x="6" y="6" width="268" height="116" rx="6" stroke-width="2.4"/>' +
+      '<rect x="13" y="13" width="254" height="102" rx="3" stroke-width="0.8"/>' +
+      "</g>" +
+      // corner rosettes
+      '<path d="' + rosette(32, 100, 15, 3, 5, 4) + '" fill="none" stroke="' + ink + '" stroke-width="0.5" opacity="0.6"/>' +
+      '<g fill="' + ink + '">' +
+      '<text x="140" y="36" text-anchor="middle" font-family="' + MONO + '" font-size="8.5" letter-spacing="3.4" font-weight="600">CERTIFICATE OF AUTHORSHIP</text>' +
+      '<text x="140" y="62" text-anchor="middle" font-family="' + SERIF + '" font-size="19" font-weight="700" letter-spacing="1.5">HUMAN WRITTEN</text>' +
+      '<text x="140" y="82" text-anchor="middle" font-family="' + MONO + '" font-size="8.5" letter-spacing="1.6">ISSUED TO · ' + by + "</text>" +
+      '<text x="253" y="108" text-anchor="end" font-family="' + MONO + '" font-size="8" letter-spacing="1.4" opacity="0.75">Nº ' +
+      serial((author || "") + location.hostname) + " · " + year + "</text>" +
+      '<text x="56" y="108" text-anchor="middle" font-family="' + MONO + '" font-size="7.5" letter-spacing="1" opacity="0.75">NAC</text>' +
+      "</g></svg>"
+    );
+  }
+
   /* ---------------- Render ---------------- */
-  // Inject the one-time entrance keyframes (stamped-onto-the-page feel).
+  // One-time style injection. The motion language: everything behaves like a
+  // real rubber stamp — presses in from above once, settles fast. The
+  // explainer is a modal storyboard (built per-widget, styles shared).
   if (!document.getElementById("nac-anim")) {
     var st = document.createElement("style");
     st.id = "nac-anim";
     st.textContent =
-      "@keyframes nacStampIn{0%{opacity:0;transform:scale(.7) rotate(-16deg)}" +
-      "55%{opacity:1;transform:scale(1.06) rotate(2deg)}" +
-      "75%{transform:scale(.98) rotate(-1deg)}100%{opacity:1;transform:none}}" +
-      // --- "What is this?" in-widget show: rings redraw, rosette & microprint spin, stamp thumps ---
+      "@keyframes nacStampIn{0%{opacity:0;transform:scale(1.18) rotate(-4deg)}" +
+      "62%{opacity:1;transform:scale(.985) rotate(.5deg)}100%{opacity:1;transform:none}}" +
+      ".nac-in{animation:nacStampIn .5s cubic-bezier(.22,1,.36,1) both}" +
       "@keyframes nacDraw{from{stroke-dashoffset:100}to{stroke-dashoffset:0}}" +
-      "@keyframes nacSpin{to{transform:rotate(360deg)}}" +
-      "@keyframes nacSpinR{to{transform:rotate(-360deg)}}" +
-      "@keyframes nacThump{0%{transform:none}35%{transform:scale(1.14) rotate(4deg)}" +
-      "60%{transform:scale(.94) rotate(-3deg)}80%{transform:scale(1.03) rotate(1deg)}100%{transform:none}}" +
-      ".nac-play{animation:nacThump .9s cubic-bezier(.2,.9,.3,1.2) both}" +
-      ".nac-play .nac-ring{stroke-dasharray:100;animation:nacDraw 1.4s ease-out both}" +
-      ".nac-play .nac-guil path{stroke-dasharray:100;animation:nacDraw 2s ease-out both}" +
-      ".nac-open .nac-rose{animation:nacSpin 16s linear infinite;transform-box:fill-box;transform-origin:center}" +
-      ".nac-open .nac-micro{animation:nacSpinR 40s linear infinite;transform-box:fill-box;transform-origin:center}" +
-      ".nac-panel{display:block;overflow:hidden;max-height:0;opacity:0;transform:translateY(-6px);" +
-      "transition:max-height .55s cubic-bezier(.2,.8,.2,1),opacity .4s ease,transform .45s ease}" +
-      ".nac-panel.nac-open-p{max-height:380px;opacity:1;transform:none}" +
-      ".nac-line{display:block;margin:0 0 5px;opacity:0;transform:translateY(6px);" +
-      "transition:opacity .5s ease,transform .5s cubic-bezier(.2,.8,.2,1)}" +
-      ".nac-show .nac-line{opacity:1;transform:none}" +
-      ".nac-chip{position:relative;display:inline-flex;align-items:center;border:2px dashed #ef4444;color:#ef4444;" +
-      "border-radius:9px;padding:6px 13px;font-weight:800;letter-spacing:1px;font-size:11.5px;opacity:0;transform:scale(.9);transition:all .4s ease}" +
-      ".nac-chip.nac-show{opacity:1;transform:none}" +
-      ".nac-chip svg{position:absolute;inset:-6px;width:calc(100% + 12px);height:calc(100% + 12px);overflow:visible}" +
-      ".nac-chip .nac-x{stroke:#ef4444;stroke-width:3.5;stroke-linecap:round;stroke-dasharray:200;stroke-dashoffset:200;transition:stroke-dashoffset .5s ease .35s}" +
-      ".nac-chip.nac-show .nac-x{stroke-dashoffset:0}" +
-      ".nac-links{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px;opacity:0;transition:opacity .4s ease}" +
-      ".nac-links.nac-show{opacity:1}" +
-      "@media (prefers-reduced-motion:reduce){.nac-in,.nac-play,.nac-play *,.nac-open .nac-rose,.nac-open .nac-micro{animation:none!important}}";
+      "@keyframes nacBlink{0%,55%{opacity:1}56%,100%{opacity:0}}" +
+      ".nac-play .nac-ring{stroke-dasharray:100;animation:nacDraw 1.1s cubic-bezier(.4,0,.2,1) both}" +
+      ".nac-play .nac-guil path{stroke-dasharray:100;animation:nacDraw 1.6s cubic-bezier(.4,0,.2,1) both}" +
+      // The CTA — a quiet pill.
+      ".nac-cta{cursor:pointer;display:inline-flex;align-items:center;gap:5px;border:1px solid CTA_BORDER;" +
+      "background:transparent;border-radius:999px;padding:4px 12px;transition:border-color .2s ease,color .2s ease,background .2s ease}" +
+      ".nac-cta:hover{border-color:CTA_INK;color:CTA_INK;background:CTA_WASH}" +
+      "@media (prefers-reduced-motion:reduce){.nac-in,.nac-play *{animation-duration:.01s!important;animation-delay:0s!important}}";
+    st.textContent = st.textContent
+      .replace(/CTA_BORDER/g, c.border)
+      .replace(/CTA_INK/g, ink)
+      .replace(/CTA_WASH/g, dark ? "rgba(255,255,255,.05)" : "rgba(8,8,12,.03)");
     document.head.appendChild(st);
   }
+
   var container = el(
     "span",
-    "display:inline-flex;flex-direction:column;align-items:center;gap:7px;font-family:" +
+    "display:inline-flex;flex-direction:column;align-items:center;gap:8px;font-family:" +
       FONT +
-      ";line-height:normal;animation:nacStampIn .8s cubic-bezier(.2,.9,.25,1.15) both;"
+      ";line-height:normal;"
   );
   container.className = "nac-in";
 
@@ -200,8 +321,10 @@
   visual.target = "_blank";
   visual.rel = "noopener noreferrer";
   visual.setAttribute("aria-label", "No AI Content — verified human writing");
-  visual.style.cssText = "text-decoration:none;color:" + c.fg + ";box-sizing:border-box;line-height:0;display:inline-block;";
+  visual.style.cssText =
+    "text-decoration:none;color:" + c.fg + ";box-sizing:border-box;line-height:0;display:inline-block;";
   var msgFull = author ? message + " — " + author : message;
+  var px = sizeAttr > 0 ? sizeAttr : 156;
 
   if (style === "compact") {
     visual.style.cssText +=
@@ -218,115 +341,68 @@
     col.appendChild(el("strong", "font-size:14px;font-weight:800;", "Human-Written &amp; Verified"));
     col.appendChild(el("span", "font-size:11.5px;color:" + c.sub + ";line-height:1.35", esc(msgFull)));
     visual.appendChild(col);
+  } else if (style === "typewriter") {
+    visual.style.cssText +=
+      "display:inline-flex;align-items:baseline;gap:2px;font-family:" + MONO +
+      ";font-size:13.5px;font-weight:600;letter-spacing:.4px;color:" + c.fg + ";line-height:normal;";
+    visual.appendChild(
+      el("span", "", "&mdash;&nbsp;typed by " + (author ? esc(author) : "a human") + ", no AI&nbsp;&mdash;")
+    );
+    visual.appendChild(
+      el("span",
+        "display:inline-block;width:8px;height:15px;background:" + ink +
+        ";animation:nacBlink 1.1s steps(1) infinite;align-self:center;", "")
+    );
+  } else if (style === "wax") {
+    visual.appendChild(el("span", "display:inline-block", waxSVG(px)));
+  } else if (style === "passport") {
+    visual.appendChild(el("span", "display:inline-block", passportSVG(Math.round(px * 1.45))));
+  } else if (style === "postmark") {
+    visual.appendChild(el("span", "display:inline-block", postmarkSVG(Math.round(px * 1.5))));
+  } else if (style === "ribbon") {
+    visual.appendChild(el("span", "display:inline-block", ribbonSVG(Math.round(px * 0.85))));
+  } else if (style === "certificate" || style === "cert") {
+    visual.appendChild(el("span", "display:inline-block", certSVG(Math.round(px * 1.65))));
   } else {
-    visual.appendChild(el("span", "display:inline-block", stampSVG(sizeAttr > 0 ? sizeAttr : 156)));
+    visual.appendChild(el("span", "display:inline-block", stampSVG(px)));
   }
   container.appendChild(visual);
 
-  /* ---------------- "What is this?" — answers INSIDE the widget ----------------
-     Clicking the CTA replays the stamp (rings redraw stroke-by-stroke, the seal
-     thumps like a real stamp, the rosette + microprint slowly counter-rotate)
-     and slides an explainer card open right under the badge. No modal. */
-  var isOpen = false;
-  var typed = false;
-  var cta = null;
-  var panel = null;
-  var tw = null;
-  var aiChip = null;
-  var links = null;
+  /* ---------------- "What is this?" ----------------
+     The explainer lives on the NAC site now, as one 16:9 scene player, so the
+     embed no longer ships a second copy of the same story.
 
-  if (style !== "compact") {
-    cta = document.createElement("button");
-    cta.type = "button";
-    cta.textContent = "ⓘ What is this?";
-    cta.setAttribute("aria-expanded", "false");
-    cta.style.cssText =
-      "cursor:pointer;border:none;background:transparent;color:" + c.sub +
-      ";font-family:" + FONT + ";font-size:11px;font-weight:600;letter-spacing:.2px;padding:2px 6px;text-decoration:underline;text-underline-offset:2px;";
-    cta.addEventListener("click", function (e) {
-      e.preventDefault();
-      toggle();
-    });
-    container.appendChild(cta);
+     The button asks the host page first: it fires a cancelable `nac:explain`
+     event, and if something handles it (nac.imswarnil.com does, opening the
+     player in place) the widget stands down. Everywhere else — a real blog
+     with the badge in its sidebar — it opens the story on the NAC site. */
 
-    var panelW = style === "banner" ? 400 : Math.max(sizeAttr > 0 ? sizeAttr : 156, 230);
-    panel = el("span", "width:" + panelW + "px;max-width:88vw;");
-    panel.className = "nac-panel";
-    var card = el(
-      "span",
-      "display:block;background:" + c.bg + ";color:" + c.fg + ";border:1px solid " + c.border +
-      ";border-radius:14px;padding:14px 15px 15px;text-align:center;box-shadow:0 6px 22px rgba(2,6,23,.12);margin-top:2px;"
-    );
-    tw = el("span", "display:block;min-height:60px;font-size:12.5px;line-height:1.55;text-align:left;");
-    aiChip = el("span", "margin-top:10px;", 'AI-GENERATED<svg viewBox="0 0 120 44" preserveAspectRatio="none" aria-hidden="true"><line class="nac-x" x1="6" y1="6" x2="114" y2="38"/></svg>');
-    aiChip.className = "nac-chip";
-    links = el("span");
-    links.className = "nac-links";
-    var linkCss =
-      "text-decoration:none;border-radius:8px;padding:7px 12px;font-size:11.5px;font-weight:700;font-family:" + FONT + ";";
-    var a1 = el("a", linkCss + "background:" + ink + ";color:#fff;", "The humans →");
-    a1.href = base + "/directory";
-    a1.target = "_blank";
-    a1.rel = "noopener noreferrer";
-    var a2 = el("a", linkCss + "color:" + c.sub + ";border:1px solid " + c.border + ";", "The rules");
-    a2.href = base + "/eligibility";
-    a2.target = "_blank";
-    a2.rel = "noopener noreferrer";
-    links.appendChild(a1);
-    links.appendChild(a2);
-    card.appendChild(tw);
-    card.appendChild(aiChip);
-    card.appendChild(links);
-    panel.appendChild(card);
-    container.appendChild(panel);
+  function explain() {
+    var ev;
+    try {
+      ev = new CustomEvent("nac:explain", { bubbles: true, cancelable: true });
+    } catch (err) {
+      // IE-era fallback; harmless if it never runs.
+      ev = document.createEvent("CustomEvent");
+      ev.initCustomEvent("nac:explain", true, true, null);
+    }
+    var handled = !window.dispatchEvent(ev); // false === someone called preventDefault
+    if (!handled) window.open(base + "/?story=1", "_blank", "noopener");
   }
 
-  function toggle() {
-    isOpen = !isOpen;
-    cta.setAttribute("aria-expanded", String(isOpen));
-    cta.textContent = isOpen ? "✕ Close" : "ⓘ What is this?";
-    container.classList.toggle("nac-open", isOpen);
-    panel.classList.toggle("nac-open-p", isOpen);
-    if (!isOpen) return;
-
-    // Replay the stamp: rings redraw + seal thump (restart by reflow).
-    visual.classList.remove("nac-play");
-    void visual.offsetWidth;
-    visual.classList.add("nac-play");
-
-    if (typed) {
-      aiChip.classList.add("nac-show");
-      links.classList.add("nac-show");
-      return;
-    }
-    typed = true;
-
-    // Reveal the manifesto as clean, styled text — no typewriter, no cursor.
-    // Each line fades and lifts into place in sequence for a calm, native feel.
-    var lines = [
-      "Some blogs are still written by a person.",
-      'AI can sharpen a sentence — it shouldn\'t <b style="color:' + ink + '">replace the writer.</b>',
-      "This stamp means a human is still behind the words.",
-    ];
-    tw.innerHTML = lines
-      .map(function (line, idx) {
-        return (
-          '<span class="nac-line" style="transition-delay:' +
-          (120 + idx * 130) +
-          'ms">' +
-          line +
-          "</span>"
-        );
-      })
-      .join("");
-    // Trigger the reveal on the next frame so the transition runs.
-    requestAnimationFrame(function () {
-      requestAnimationFrame(function () {
-        tw.classList.add("nac-show");
-      });
+  if (style !== "compact") {
+    var cta = document.createElement("button");
+    cta.type = "button";
+    cta.className = "nac-cta";
+    cta.textContent = "ⓘ What is this?";
+    cta.setAttribute("aria-haspopup", "dialog");
+    cta.style.cssText =
+      "color:" + c.sub + ";font-family:" + FONT + ";font-size:11px;font-weight:600;letter-spacing:.2px;";
+    cta.addEventListener("click", function (e) {
+      e.preventDefault();
+      explain();
     });
-    setTimeout(function () { aiChip.classList.add("nac-show"); }, 560);
-    setTimeout(function () { links.classList.add("nac-show"); }, 700);
+    container.appendChild(cta);
   }
 
   script.parentNode.insertBefore(container, script.nextSibling);

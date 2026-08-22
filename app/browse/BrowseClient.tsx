@@ -3,6 +3,17 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { CATEGORIES, REGIONS } from "@/lib/taxonomy";
+import {
+  IconExternal,
+  IconSearch,
+  IconCompass,
+  IconGlobe,
+  IconScale,
+  IconCheck,
+  IconX,
+  IconArrowRight,
+  IconChevron,
+} from "../components/icons";
 
 export type DirSite = {
   domain: string;
@@ -28,12 +39,64 @@ function facetCounts(values: (string | null)[], defaults: string[]): [string, nu
   return Array.from(m).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
 }
 
+/** One checkbox group. Collapsible, because two 17-item lists is a long rail. */
+function Facet({
+  legend,
+  Icon,
+  items,
+  selected,
+  onToggle,
+}: {
+  legend: string;
+  Icon: (p: { size?: number }) => JSX.Element;
+  items: [string, number][];
+  selected: Set<string>;
+  onToggle: (value: string) => void;
+}) {
+  const [open, setOpen] = useState(true);
+  const chosen = items.filter(([v]) => selected.has(v)).length;
+
+  return (
+    <section className={`facet ${open ? "open" : ""}`}>
+      <button
+        type="button"
+        className="facet-head"
+        aria-expanded={open}
+        onClick={() => setOpen((o) => !o)}
+      >
+        <Icon size={15} />
+        <span className="facet-legend">{legend}</span>
+        {chosen > 0 && <span className="facet-badge">{chosen}</span>}
+        <IconChevron size={14} />
+      </button>
+      {open && (
+        <div className="facet-list" role="group" aria-label={legend}>
+          {items.map(([value, n]) => (
+            <label key={value} className={`cbx ${n === 0 ? "empty" : ""}`}>
+              <input
+                type="checkbox"
+                checked={selected.has(value)}
+                onChange={() => onToggle(value)}
+              />
+              <span className="cbx-box" aria-hidden>
+                <IconCheck size={11} />
+              </span>
+              <span className="cbx-label">{value}</span>
+              <span className="cbx-count">{n}</span>
+            </label>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
 /**
- * Sidebar directory: checkbox facets (category, region) + instant search.
+ * Browse sidebar: checkbox facets (category, region) + instant search.
  * Checkboxes are OR within a group and AND across groups. Selections are
  * mirrored into the URL (?q=&category=a,b&region=x) so views stay shareable.
  */
-export default function DirectoryClient({
+export default function BrowseClient({
   sites,
   initialRegions,
   initialCategories,
@@ -48,16 +111,17 @@ export default function DirectoryClient({
   const [cats, setCats] = useState<Set<string>>(() => parseList(initialCategories));
   const [regs, setRegs] = useState<Set<string>>(() => parseList(initialRegions));
 
-  // Facet options: only categories/regions that sites actually declared, sorted
-  // by count. A currently-selected value is always kept visible even if the last
-  // matching site is filtered out, so the user can still toggle it back off.
+  // Show the whole taxonomy, sorted by how many sites actually use it. Empty
+  // categories stay listed (dimmed) rather than vanishing — a sidebar that
+  // reflows every time you tick a box is harder to use than one that doesn't,
+  // and the zeroes are honest information: nobody writes about that yet.
   const catCounts = useMemo(
-    () => facetCounts(sites.map((s) => s.category), CATEGORIES).filter(([c, n]) => n > 0 || cats.has(c)),
-    [sites, cats],
+    () => facetCounts(sites.map((s) => s.category), CATEGORIES),
+    [sites],
   );
   const regCounts = useMemo(
-    () => facetCounts(sites.map((s) => s.region), REGIONS).filter(([r, n]) => n > 0 || regs.has(r)),
-    [sites, regs],
+    () => facetCounts(sites.map((s) => s.region), REGIONS),
+    [sites],
   );
 
   function syncUrl(next: { q?: string; cats?: Set<string>; regs?: Set<string> }) {
@@ -69,7 +133,7 @@ export default function DirectoryClient({
     if (nc.size) p.set("category", Array.from(nc).join(","));
     if (nr.size) p.set("region", Array.from(nr).join(","));
     const s = p.toString();
-    window.history.replaceState(null, "", s ? `/directory?${s}` : "/directory");
+    window.history.replaceState(null, "", s ? `/browse?${s}` : "/browse");
   }
 
   function toggleIn(set: Set<string>, value: string): Set<string> {
@@ -104,70 +168,78 @@ export default function DirectoryClient({
 
   return (
     <div className="dir-layout">
-      <aside className="dir-side" aria-label="Directory filters">
-        <input
-          className="dir-search-input"
-          type="search"
-          value={q}
-          onChange={(e) => {
-            setQ(e.target.value);
-            syncUrl({ q: e.target.value });
-          }}
-          placeholder="Search sites…"
-          aria-label="Search the directory"
-        />
-
-        {catCounts.length > 0 && (
-        <fieldset className="facet">
-          <legend>Category</legend>
-          <div className="facet-list">
-            {catCounts.map(([cat, n]) => (
-              <label key={cat} className={`cbx ${n === 0 && !cats.has(cat) ? "empty" : ""}`}>
-                <input
-                  type="checkbox"
-                  checked={cats.has(cat)}
-                  onChange={() => {
-                    const next = toggleIn(cats, cat);
-                    setCats(next);
-                    syncUrl({ cats: next });
-                  }}
-                />
-                <span className="cbx-label">{cat}</span>
-                {n > 0 && <span className="cbx-count">{n}</span>}
-              </label>
-            ))}
+      <aside className="dir-side" aria-label="Browse filters">
+        <div className="dir-side-inner">
+          <div className="side-search">
+            <IconSearch size={15} />
+            <input
+              type="search"
+              value={q}
+              onChange={(e) => {
+                setQ(e.target.value);
+                syncUrl({ q: e.target.value });
+              }}
+              placeholder="Search sites…"
+              aria-label="Search human-written sites"
+            />
           </div>
-        </fieldset>
-        )}
 
-        {regCounts.length > 0 && (
-        <fieldset className="facet">
-          <legend>Country / region</legend>
-          <div className="facet-list">
-            {regCounts.map(([r, n]) => (
-              <label key={r} className={`cbx ${n === 0 && !regs.has(r) ? "empty" : ""}`}>
-                <input
-                  type="checkbox"
-                  checked={regs.has(r)}
-                  onChange={() => {
-                    const next = toggleIn(regs, r);
-                    setRegs(next);
-                    syncUrl({ regs: next });
-                  }}
-                />
-                <span className="cbx-label">{r}</span>
-                {n > 0 && <span className="cbx-count">{n}</span>}
-              </label>
-            ))}
+          <Facet
+            legend="Category"
+            Icon={IconCompass}
+            items={catCounts}
+            selected={cats}
+            onToggle={(v) => {
+              const next = toggleIn(cats, v);
+              setCats(next);
+              syncUrl({ cats: next });
+            }}
+          />
+
+          <Facet
+            legend="Country / region"
+            Icon={IconGlobe}
+            items={regCounts}
+            selected={regs}
+            onToggle={(v) => {
+              const next = toggleIn(regs, v);
+              setRegs(next);
+              syncUrl({ regs: next });
+            }}
+          />
+
+          {hasFilters && (
+            <button className="side-clear" onClick={clearAll}>
+              <IconX size={14} /> Clear all filters
+            </button>
+          )}
+
+          {/* The rules, where someone browsing is most likely to wonder what
+              being on this list actually claims. */}
+          <div className="side-note">
+            <span className="side-note-head">
+              <IconScale size={15} /> What listing means
+            </span>
+            <p>
+              Every site here <strong>declares</strong> its writing is human. AI may polish a
+              sentence — it may not write the post.
+            </p>
+            <ul className="side-rules">
+              <li>
+                <IconCheck size={13} /> Grammar, rephrasing, translation
+              </li>
+              <li>
+                <IconX size={13} /> Whole posts from a prompt
+              </li>
+            </ul>
+            <p className="side-note-foot">
+              Listings are re-verified — remove the stamp and the site drops off.
+            </p>
+            <Link className="side-note-link" href="/eligibility">
+              Read the full rules <IconArrowRight size={13} />
+            </Link>
           </div>
-        </fieldset>
-        )}
-
-        {hasFilters && (
-          <button className="link-btn" onClick={clearAll}>
-            Clear all filters
-          </button>
-        )}
+        </div>
       </aside>
 
       <div className="dir-main">
@@ -218,8 +290,8 @@ export default function DirectoryClient({
                       .join(" · ") || `since ${fmt(s.first_seen)}`}
                   </span>
                 </span>
-                <span className="dir-arrow" aria-hidden>
-                  ↗
+                <span className="dir-arrow">
+                  <IconExternal size={16} />
                 </span>
               </a>
             ))}

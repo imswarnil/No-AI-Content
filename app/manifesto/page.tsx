@@ -2,6 +2,8 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
+import { IconFeather } from "../components/icons";
+import { ArtSeal } from "../components/ScrollArt";
 
 /**
  * The manifesto — the "why this exists" page. Big statement blocks with
@@ -31,31 +33,12 @@ export default function Manifesto() {
 
   return (
     <main>
-      {/* ---------- NAV ---------- */}
-      <header className="nav">
-        <Link className="brand" href="/">
-          <span className="brand-seal" aria-hidden>
-            ✒︎
-          </span>
-          <span className="brand-name">
-            NAC<span className="brand-sub">No AI Content</span>
-          </span>
-        </Link>
-        <nav className="nav-links">
-          <Link href="/manifesto">Manifesto</Link>
-          <Link href="/directory">Directory</Link>
-          <Link href="/eligibility">Rules</Link>
-          <Link href="/check">Check</Link>
-          <Link className="btn sm" href="/#build">
-            Get your stamp
-          </Link>
-        </nav>
-      </header>
-
       {/* ---------- HERO ---------- */}
       <section className="hero">
         <div className="hero-inner">
-          <span className="pill-tag">✒︎ The manifesto</span>
+          <span className="pill-tag">
+            <IconFeather size={13} /> The manifesto
+          </span>
           <h1>
             The web is worth <span className="grad">writing for</span>.
           </h1>
@@ -103,11 +86,11 @@ export default function Manifesto() {
               NAC is a small, honest badge you add to your site in one line of code. It doesn&apos;t
               scan or &ldquo;prove&rdquo; anything — no detector can, and the ones that claim to
               routinely mislabel real human writing. It&apos;s a declaration you choose to make,
-              backed by a public directory so readers can find people like you.
+              backed by a public, browsable roll of humans so readers can find people like you.
             </p>
             <ul>
               <li>A visible signal that a human is behind the words.</li>
-              <li>A public directory of writers, filterable by topic and region.</li>
+              <li>A public, browsable roll of writers, filterable by topic and region.</li>
               <li>Free, open source, and privacy-first — only the domain is recorded.</li>
             </ul>
             <h2>Why it matters</h2>
@@ -132,28 +115,19 @@ export default function Manifesto() {
           If a human wrote it, <span className="grad">say so.</span>
         </p>
         <p className="support">
-          Add the seal, join the directory, and help keep the web worth reading.
+          Add the seal, join the roll of humans, and help keep the web worth reading.
         </p>
+        {/* The argument ends on the mark it argues for. */}
+        <ArtSeal />
         <div className="hero-cta" style={{ marginTop: 30 }}>
           <Link className="btn lg" href="/#build">
             Create your stamp
           </Link>
-          <Link className="btn lg ghost" href="/directory">
+          <Link className="btn lg ghost" href="/browse">
             See who&apos;s in →
           </Link>
         </div>
       </section>
-
-      {/* ---------- FOOTER ---------- */}
-      <footer className="footer">
-        <p>
-          ✒︎ <strong>NAC — No AI Content</strong>. Free &amp; open source.
-        </p>
-        <p className="muted">
-          <Link href="/">Home</Link> · <Link href="/directory">Directory</Link> ·{" "}
-          <Link href="/eligibility">Rules</Link> · <Link href="/check">Check my site</Link>
-        </p>
-      </footer>
     </main>
   );
 }

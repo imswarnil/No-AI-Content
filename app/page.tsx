@@ -2,9 +2,31 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import StoryModal from "./StoryModal";
+import Share from "./components/Share";
+import Pulse from "./components/Pulse";
+import {
+  IconFeather,
+  IconUsers,
+  IconCompass,
+  IconLeaf,
+  IconScale,
+  IconSearch,
+  IconCheck,
+  IconPlay,
+} from "./components/icons";
+import { ArtInfinite, ArtJudgement } from "./components/ScrollArt";
 import { CATEGORIES, REGIONS } from "@/lib/taxonomy";
 
-type Style = "stamp" | "banner" | "compact";
+type Style =
+  | "stamp"
+  | "wax"
+  | "passport"
+  | "postmark"
+  | "ribbon"
+  | "certificate"
+  | "typewriter"
+  | "banner"
+  | "compact";
 
 const PRESETS = [
   "Written by a human. AI is used only to refine ideas — never to generate.",
@@ -15,6 +37,12 @@ const PRESETS = [
 
 const STYLES: { key: Style; name: string; blurb: string }[] = [
   { key: "stamp", name: "Notary stamp", blurb: "The signature seal — for sidebars" },
+  { key: "wax", name: "Wax seal", blurb: "Pressed in molten ink" },
+  { key: "passport", name: "Passport visa", blurb: "Admitted to the open web" },
+  { key: "postmark", name: "Postmark", blurb: "Hand-delivered writing" },
+  { key: "ribbon", name: "Prize ribbon", blurb: "100% human, award-style" },
+  { key: "certificate", name: "Certificate", blurb: "Serial-numbered declaration" },
+  { key: "typewriter", name: "Typewriter byline", blurb: "A quiet mono signature" },
   { key: "banner", name: "Banner", blurb: "Best for footers / about pages" },
   { key: "compact", name: "Compact pill", blurb: "Best for inline / bylines" },
 ];
@@ -32,6 +60,20 @@ export default function Home() {
 
   useEffect(() => {
     setOrigin(window.location.origin);
+  }, []);
+
+  // The embedded stamp's own "What is this?" button asks the page to explain
+  // itself before falling back to opening the site. Here we're already home,
+  // so answer it in place. ?story=1 is the same entry point for a stamp
+  // clicked on somebody else's blog.
+  useEffect(() => {
+    const onExplain = (e: Event) => {
+      e.preventDefault();
+      setStoryOpen(true);
+    };
+    window.addEventListener("nac:explain", onExplain);
+    if (new URLSearchParams(window.location.search).get("story")) setStoryOpen(true);
+    return () => window.removeEventListener("nac:explain", onExplain);
   }, []);
 
   // Reveal-on-scroll: fade + lift elements marked `.reveal` as they enter view.
@@ -80,78 +122,66 @@ export default function Home() {
 
   return (
     <main>
-      {/* ---------- NAV ---------- */}
-      <header className="nav">
-        <a className="brand" href="/">
-          <span className="brand-seal" aria-hidden>
-            ✒︎
-          </span>
-          <span className="brand-name">
-            NAC<span className="brand-sub">No AI Content</span>
-          </span>
-        </a>
-        <nav className="nav-links">
-          <a href="/manifesto">Manifesto</a>
-          <a href="#build">Build</a>
-          <a href="/directory">Directory</a>
-          <a href="/eligibility">Rules</a>
-          <a href="/check">Check</a>
-          <a className="btn sm" href="#build">
-            Get your stamp
-          </a>
-        </nav>
-      </header>
-
       {/* ---------- HERO ---------- */}
-      <section className="hero">
-        <div className="hero-inner">
-          <span className="pill-tag">✒︎ NAC · Open source · Free forever</span>
+      <section className="hero split">
+        <div className="hero-copy">
+          <span className="pill-tag">
+            <IconFeather size={13} /> NAC · Open source · Free forever
+          </span>
           <h1>
             Real writing by <span className="grad">real humans</span>.
           </h1>
           <p className="lede">
-            <strong>NAC — No AI Content.</strong> A badge for blogs written by a person, not
-            generated end-to-end by a machine. Add it to your sidebar to tell readers the ideas
-            and words are yours.
+            <strong>NAC — No AI Content.</strong> A notary-style stamp for blogs written by a
+            person, not generated end-to-end by a machine. Add it to your site to tell readers the
+            ideas and words are yours.
           </p>
           <div className="hero-cta">
             <a className="btn lg" href="#build">
               Create your stamp
             </a>
             <button className="btn lg ghost" onClick={() => setStoryOpen(true)}>
-              ▶ What is this?
+              <IconPlay size={15} /> What is this?
             </button>
-            <a className="btn lg ghost" href="/directory">
-              See who uses it →
-            </a>
           </div>
           <p className="manifesto">
             I miss the old web — blogs where a human actually thought and wrote. Using AI to
             sharpen a sentence or pressure-test an idea is fine. Publishing a soulless,
-            end-to-end AI-generated post as your own is not. This badge is a small, honest
+            end-to-end AI-generated post as your own is not. This stamp is a small, honest
             signal that a person is still behind the words.
           </p>
         </div>
+
+        {/* The right column is the product itself — the real widget, running. */}
+        <div className="hero-stage" aria-label="Live preview of the NAC stamp">
+          <div className="hero-stage-frame">
+            <WidgetPreview origin={origin} style="stamp" theme={theme} author={author} message={message} />
+          </div>
+          <span className="hero-stage-cap">
+            Live preview · this is the actual embed
+          </span>
+        </div>
       </section>
 
-      {/* ---------- MISSION (big statement) ---------- */}
+      {/* ---------- WHY THIS PROJECT EXISTS ---------- */}
       <section className="statement reveal">
-        <span className="kicker">The mission</span>
+        <span className="kicker">Why this exists</span>
         <p className="big">
-          Keep the web <span className="grad">human</span>.{" "}
-          <span className="muted-word">One honest badge at a time.</span>
+          Content became <span className="muted-word">infinite</span>.<br />
+          Meaning became <span className="grad">scarce</span>.
         </p>
         <p className="support">
-          The internet is filling with text no person ever thought or wrote. NAC is a small,
-          public signal that pushes the other way — a way for real writers to stand up and say
-          <em> these words are mine.</em>
+          The internet is filling with text no person ever thought or wrote — polished, generic,
+          and empty. NAC exists to push the other way: a public, verifiable signal that lets real
+          writers stand up and say <em>these words are mine</em>, and lets readers find them.
         </p>
+        <ArtInfinite />
       </section>
 
-      {/* ---------- WHY IT MATTERS (big statement, tinted band) ---------- */}
+      {/* ---------- THE MOTIVE (tinted band) ---------- */}
       <div className="band">
         <section className="statement reveal">
-          <span className="kicker">Why it matters</span>
+          <span className="kicker">The motive</span>
           <p className="big">
             A machine can imitate your <span className="muted-word">style</span>.
             <br />
@@ -160,8 +190,10 @@ export default function Home() {
           <p className="support">
             Readers are learning to distrust polished, generic prose. A human voice — with a real
             point of view, lived detail, and the odd rough edge — is becoming the rarest and most
-            valuable thing on the web. NAC helps yours get noticed.
+            valuable thing on the web. NAC is not anti-AI: use AI to refine your thinking. It&apos;s
+            anti-<em>pretending</em> — against machines writing and humans taking the credit.
           </p>
+          <ArtJudgement />
         </section>
       </div>
 
@@ -171,7 +203,7 @@ export default function Home() {
         <p className="sec-sub">Three reasons it&apos;s worth one line of code.</p>
         <div className="why-grid">
           <div className="why-card">
-            <span className="ico" aria-hidden>🤝</span>
+            <span className="ico"><IconUsers size={22} /></span>
             <h3>Earn reader trust</h3>
             <p>
               A visible, verifiable declaration tells visitors a person stands behind every word —
@@ -179,15 +211,15 @@ export default function Home() {
             </p>
           </div>
           <div className="why-card">
-            <span className="ico" aria-hidden>🔎</span>
+            <span className="ico"><IconCompass size={22} /></span>
             <h3>Get discovered</h3>
             <p>
-              Every badge lists your site in the public directory of human writers, filterable by
+              Every stamp lists your site on the public Browse page of human writers, filterable by
               topic and region.
             </p>
           </div>
           <div className="why-card">
-            <span className="ico" aria-hidden>🌱</span>
+            <span className="ico"><IconLeaf size={22} /></span>
             <h3>Stand for something</h3>
             <p>
               Join a growing movement of people who still write by hand — and help keep the open web
@@ -201,29 +233,42 @@ export default function Home() {
       <section className="section reveal" style={{ paddingBottom: 24 }}>
         <h2 className="sec-title">How NAC works</h2>
         <p className="sec-sub">Live in under two minutes. No account, no cost.</p>
-        <div className="steps">
-          <div className="step">
+        <div className="steps four">
+          <a className="step" href="/check">
             <span className="step-n">1</span>
+            <strong>Verify your writing</strong>
+            <span className="muted">
+              Run your page through the open detector — see how human it reads before you claim the
+              stamp.
+            </span>
+          </a>
+          <div className="step">
+            <span className="step-n">2</span>
             <strong>Customize your seal</strong>
             <span className="muted">Pick a style, add your name, region &amp; category.</span>
           </div>
           <div className="step">
-            <span className="step-n">2</span>
+            <span className="step-n">3</span>
             <strong>Copy one line of code</strong>
             <span className="muted">Paste the snippet into your sidebar, footer, or byline.</span>
           </div>
           <div className="step">
-            <span className="step-n">3</span>
-            <strong>Get listed</strong>
-            <span className="muted">Your site joins the public directory of human writers.</span>
+            <span className="step-n">4</span>
+            <strong>Get listed &amp; re-verified</strong>
+            <span className="muted">
+              Your site joins the Browse page — and NAC keeps checking the stamp is really there.
+            </span>
           </div>
         </div>
       </section>
 
       {/* ---------- STYLES SHOWCASE ---------- */}
       <section id="styles" className="section reveal">
-        <h2 className="sec-title">Three styles, one honest signal</h2>
-        <p className="sec-sub">Pick whichever fits where you want it. All are customizable.</p>
+        <h2 className="sec-title">Nine styles, one honest signal</h2>
+        <p className="sec-sub">
+          Notary seal, wax seal, passport visa, postmark, ribbon, certificate, typewriter, banner,
+          pill — pick whichever fits where your words live. All customizable.
+        </p>
         <div className="showcase">
           {STYLES.map((s) => (
             <div className="showcase-card" key={s.key}>
@@ -310,8 +355,8 @@ export default function Home() {
               </div>
             </div>
             <p className="muted" style={{ fontSize: 12, marginTop: 10 }}>
-              Region &amp; category help readers find you in the{" "}
-              <a href="/directory">public directory</a>.
+              Region &amp; category become filters on the <a href="/browse">Browse page</a> so
+              readers can find you.
             </p>
           </div>
 
@@ -327,16 +372,22 @@ export default function Home() {
           <label>Copy this into your site</label>
           <pre>{embedCode}</pre>
           <button className="btn" onClick={copy} style={{ marginTop: 14 }}>
-            {copied ? "✓ Copied!" : "Copy embed code"}
+            {copied ? (
+              <>
+                <IconCheck size={15} /> Copied!
+              </>
+            ) : (
+              "Copy embed code"
+            )}
           </button>
         </div>
       </section>
 
-      {/* ---------- ELIGIBILITY / CHECK ---------- */}
+      {/* ---------- ELIGIBILITY / VERIFY ---------- */}
       <section className="section reveal" style={{ paddingTop: 0 }}>
         <div className="two-cta">
           <a className="cta-card" href="/eligibility">
-            <span className="cta-emoji">📜</span>
+            <span className="cta-emoji"><IconScale size={26} /></span>
             <strong>Do I qualify?</strong>
             <span className="muted">
               See which uses of AI are allowed (refining, grammar) and which aren&apos;t (generating
@@ -344,11 +395,11 @@ export default function Home() {
             </span>
           </a>
           <a className="cta-card" href="/check">
-            <span className="cta-emoji">🔍</span>
-            <strong>Check my writing</strong>
+            <span className="cta-emoji"><IconSearch size={26} /></span>
+            <strong>Verify my writing</strong>
             <span className="muted">
-              Get honest, specific feedback on where your page reads generic — and how to make it
-              unmistakably yours.
+              The testing layer behind the stamp: a transparent AI-likeness score, with third-party
+              cross-checks if you want a second opinion.
             </span>
           </a>
         </div>
@@ -382,6 +433,24 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ---------- THE PULSE: visitors + poll ---------- */}
+      <section className="section reveal">
+        <h2 className="sec-title">You&apos;re not alone in this</h2>
+        <p className="sec-sub">
+          Live counts from this very page — no cookies, no accounts, just honest tallies.
+        </p>
+        <Pulse />
+      </section>
+
+      {/* ---------- SPREAD THE WORD ---------- */}
+      <section className="section reveal">
+        <h2 className="sec-title">Spread the word</h2>
+        <p className="sec-sub">
+          The stamp only works if readers recognize it. Share NAC wherever your people are.
+        </p>
+        <Share />
+      </section>
+
       {/* ---------- FAQ ---------- */}
       <section className="section reveal">
         <h2 className="sec-title">Questions</h2>
@@ -404,10 +473,10 @@ export default function Home() {
           <details>
             <summary>Can NAC prove my content is AI-free?</summary>
             <p>
-              Honestly, no tool can — AI detectors routinely mislabel real human writing. The badge
+              Honestly, no tool can — AI detectors routinely mislabel real human writing. The stamp
               is a <em>declaration</em> you choose to make. The optional{" "}
-              <a href="/check">Check</a> page gives constructive feedback to help you improve, not a
-              verdict.
+              <a href="/check">verification layer</a> gives constructive feedback to help you
+              improve, not a verdict.
             </p>
           </details>
           <details>
@@ -441,28 +510,12 @@ export default function Home() {
             <a className="btn lg" href="#build">
               Add the badge to your site
             </a>
-            <a className="btn lg ghost" href="/directory">
+            <a className="btn lg ghost" href="/browse">
               Meet the humans already in →
             </a>
           </div>
         </div>
       </section>
-
-      {/* ---------- FOOTER ---------- */}
-      <footer className="footer">
-        <p>
-          ✒︎ <strong>NAC — No AI Content</strong>. Free &amp; open source. Only the embedding domain
-          is recorded; no cookies, no visitor tracking.
-        </p>
-        <p className="muted">
-          <a href="/manifesto">Manifesto</a> · <a href="/directory">Directory</a> ·{" "}
-          <a href="/eligibility">Rules</a> · <a href="/check">Check my site</a> ·{" "}
-          <a href="/dashboard">Dashboard</a> ·{" "}
-          <a href="https://github.com/imswarnil/No-AI-Content" target="_blank" rel="noreferrer">
-            GitHub
-          </a>
-        </p>
-      </footer>
 
       <StoryModal open={storyOpen} onClose={() => setStoryOpen(false)} />
     </main>

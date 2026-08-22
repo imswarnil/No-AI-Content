@@ -127,6 +127,40 @@ export async function recordHit(
   `;
 }
 
+/* ---------------- Pulse: visitor count + "do you think the same?" poll ------
+   A single counters table keyed by name. Three keys are used today:
+   visits, poll_agree, poll_disagree. */
+
+let metricsReady = false;
+
+async function ensureMetrics(): Promise<void> {
+  if (metricsReady) return;
+  await sql`
+    CREATE TABLE IF NOT EXISTS metrics (
+      key   TEXT PRIMARY KEY,
+      value BIGINT NOT NULL DEFAULT 0
+    )
+  `;
+  metricsReady = true;
+}
+
+export type PulseStats = { visits: number; agree: number; disagree: number };
+
+export async function bumpMetric(key: "visits" | "poll_agree" | "poll_disagree"): Promise<void> {
+  await ensureMetrics();
+  await sql`
+    INSERT INTO metrics (key, value) VALUES (${key}, 1)
+    ON CONFLICT (key) DO UPDATE SET value = metrics.value + 1
+  `;
+}
+
+export async function getPulse(): Promise<PulseStats> {
+  await ensureMetrics();
+  const rows = (await sql`SELECT key, value FROM metrics`) as { key: string; value: string }[];
+  const get = (k: string) => Number(rows.find((r) => r.key === k)?.value || 0);
+  return { visits: get("visits"), agree: get("poll_agree"), disagree: get("poll_disagree") };
+}
+
 /** All embedding sites, most recently active first. */
 export async function listSites(): Promise<SiteRow[]> {
   await ensureSchema();

@@ -2,6 +2,15 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import {
+  IconSearch,
+  IconCheck,
+  IconHelp,
+  IconRobot,
+  IconAlert,
+  IconFeather,
+  IconExternal,
+} from "../components/icons";
 
 type Signal = {
   key: string;
@@ -21,10 +30,13 @@ type Detection = {
   stats: { words: number; sentences: number; avgSentenceLen: number; burstiness: number; uniqueRatio: number };
 };
 
-const VERDICT: Record<string, { label: string; tone: string; emoji: string }> = {
-  reads_human: { label: "Reads human", tone: "ok", emoji: "✅" },
-  mixed_signals: { label: "Mixed signals", tone: "warn", emoji: "🤔" },
-  reads_ai_generated: { label: "Leans AI-generated", tone: "no", emoji: "🤖" },
+const VERDICT: Record<
+  string,
+  { label: string; tone: string; Icon: (p: { size?: number }) => JSX.Element }
+> = {
+  reads_human: { label: "Reads human", tone: "ok", Icon: IconCheck },
+  mixed_signals: { label: "Mixed signals", tone: "warn", Icon: IconHelp },
+  reads_ai_generated: { label: "Leans AI-generated", tone: "no", Icon: IconRobot },
 };
 
 export default function Check() {
@@ -90,13 +102,17 @@ export default function Check() {
     <main>
       <section className="hero">
         <div className="hero-inner">
-          <span className="pill-tag">🔍 NAC detector · your own logic</span>
+          <span className="pill-tag">
+            <IconSearch size={13} /> The verification layer
+          </span>
           <h1>
             How <span className="grad">AI-like</span> does it read?
           </h1>
           <p className="lede">
-            A transparent, signal-based score — no black box. See exactly which patterns pushed the
-            result, and how to make the writing unmistakably yours.
+            This is the testing layer behind the stamp: anyone requesting the NAC seal can run
+            their site or text through it first. A transparent, signal-based score — no black box —
+            showing exactly which patterns pushed the result, plus optional second opinions from
+            Claude and third-party detectors.
           </p>
 
           <div className="mode-toggle">
@@ -136,7 +152,8 @@ export default function Check() {
           )}
 
           <p className="disclaimer">
-            ⚠️ Honest by design: this is a <strong>heuristic signal score, not proof</strong>. No
+            <IconAlert size={14} /> Honest by design: this is a{" "}
+            <strong>heuristic signal score, not proof</strong>. No
             tool can reliably detect AI — real human writing gets false-flagged all the time. Use it
             to improve, never to accuse.
           </p>
@@ -146,14 +163,16 @@ export default function Check() {
       <section className="section" style={{ paddingTop: 12 }}>
         {error && (
           <div className="card" style={{ borderColor: "#fecaca" }}>
-            <p style={{ color: "#dc2626", margin: 0 }}>⚠ {error}</p>
+            <p style={{ color: "#dc2626", margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
+              <IconAlert size={16} /> {error}
+            </p>
           </div>
         )}
 
         {det && v && (
           <>
             <div className={`verdict ${v.tone}`}>
-              <span className="ve">{v.emoji}</span>
+              <span className="ve"><v.Icon size={30} /></span>
               <div style={{ flex: 1 }}>
                 <strong>{v.label}</strong>
                 <span className="muted"> · confidence: {det.confidence}</span>
@@ -210,7 +229,7 @@ export default function Check() {
             <div className="card" style={{ marginTop: 18, textAlign: "center" }}>
               {det.verdict === "reads_human" ? (
                 <>
-                  <p style={{ marginTop: 0 }}>Reads human. Claim your stamp and get listed. 🎉</p>
+                  <p style={{ marginTop: 0 }}>Reads human. Claim your stamp and get listed.</p>
                   <Link className="btn" href="/#build">
                     Create my stamp
                   </Link>
@@ -229,14 +248,23 @@ export default function Check() {
                       {aiLoading ? "Asking Claude…" : "Want a deeper read? Get an AI second opinion"}
                     </button>
                   )}
-                  {aiErr && <p className="muted" style={{ fontSize: 13, marginTop: 10 }}>⚠ {aiErr}</p>}
+                  {aiErr && (
+                    <p
+                      className="muted"
+                      style={{ fontSize: 13, marginTop: 10, display: "flex", alignItems: "center", gap: 6, justifyContent: "center" }}
+                    >
+                      <IconAlert size={14} /> {aiErr}
+                    </p>
+                  )}
                 </div>
               )}
             </div>
 
             {ai && (
               <div className="card" style={{ marginTop: 18 }}>
-                <h2 style={{ marginTop: 0 }}>🖋️ Claude&apos;s take — {ai.summary}</h2>
+                <h2 style={{ marginTop: 0, display: "flex", alignItems: "center", gap: 10 }}>
+                  <IconFeather size={20} /> Claude&apos;s take — {ai.summary}
+                </h2>
                 {ai.improvements?.length > 0 && (
                   <ul className="feedback">
                     {ai.improvements.map((im: any, i: number) => (
@@ -249,19 +277,31 @@ export default function Check() {
                 )}
               </div>
             )}
+
+            <div className="card" style={{ marginTop: 18 }}>
+              <h2 style={{ marginTop: 0 }}>Cross-check with third parties</h2>
+              <p className="muted" style={{ marginTop: -4 }}>
+                No single detector should be trusted alone — including this one. If the result
+                surprised you, paste the same text into an independent service and compare. They all
+                disagree sometimes; that disagreement is the honest picture.
+              </p>
+              <div className="xcheck">
+                {[
+                  ["GPTZero", "https://gptzero.me"],
+                  ["Copyleaks", "https://copyleaks.com/ai-content-detector"],
+                  ["Originality.ai", "https://originality.ai"],
+                  ["QuillBot", "https://quillbot.com/ai-content-detector"],
+                  ["Sapling", "https://sapling.ai/ai-content-detector"],
+                ].map(([name, href]) => (
+                  <a key={name} className="xcheck-link" href={href} target="_blank" rel="noopener noreferrer">
+                    {name} <IconExternal size={13} />
+                  </a>
+                ))}
+              </div>
+            </div>
           </>
         )}
       </section>
-
-      <footer className="footer">
-        <p>
-          ✒︎ <strong>NAC — No AI Content</strong>. Free &amp; open source.
-        </p>
-        <p className="muted">
-          <Link href="/">Home</Link> · <Link href="/directory">Directory</Link> ·{" "}
-          <Link href="/eligibility">Rules</Link>
-        </p>
-      </footer>
     </main>
   );
 }

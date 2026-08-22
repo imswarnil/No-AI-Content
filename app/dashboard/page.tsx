@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { IconCheck, IconX, IconAlert } from "../components/icons";
 
 type Site = {
   domain: string;
@@ -53,7 +54,7 @@ export default function Dashboard() {
 
   return (
     <main className="container">
-      <div className="hero">
+      <div style={{ textAlign: "center", padding: "2.5rem 0 1.5rem" }}>
         <h1>Usage dashboard</h1>
         <p className="muted">Sites currently embedding your No AI Content badge.</p>
       </div>
@@ -73,7 +74,9 @@ export default function Dashboard() {
           </button>
         </div>
         {error && (
-          <p style={{ color: "#dc2626", marginTop: 12, fontSize: 14 }}>⚠ {error}</p>
+          <p style={{ color: "#dc2626", marginTop: 12, fontSize: 14, display: "flex", alignItems: "center", gap: 6 }}>
+            <IconAlert size={15} /> {error}
+          </p>
         )}
       </div>
 
@@ -124,12 +127,18 @@ export default function Dashboard() {
                         <td>{s.author || <span className="muted">—</span>}</td>
                         <td>
                           {listedInDirectory(s) ? (
-                            <span title={s.has_widget ? "Widget found on homepage" : "Not verified yet / recent badge loads"}>
-                              ✅ listed
+                            <span
+                              className="cell-flag"
+                              title={s.has_widget ? "Widget found on homepage" : "Not verified yet / recent badge loads"}
+                            >
+                              <IconCheck size={14} /> listed
                             </span>
                           ) : (
-                            <span className="muted" title="Widget not found on homepage and no badge loads in 7 days">
-                              🚫 hidden
+                            <span
+                              className="cell-flag muted"
+                              title="Widget not found on homepage and no badge loads in 7 days"
+                            >
+                              <IconX size={14} /> hidden
                             </span>
                           )}
                         </td>

@@ -5,7 +5,11 @@ const nextConfig = {
     // People search "ai content detector", "ai checker" etc. — catch the
     // obvious URL guesses and land them on the detector.
     const aliases = ["/detector", "/ai-content-detector", "/ai-detector", "/ai-checker", "/detect"];
-    return aliases.map((source) => ({ source, destination: "/check", permanent: true }));
+    return [
+      ...aliases.map((source) => ({ source, destination: "/check", permanent: true })),
+      // The directory is now "Browse" — keep old links working.
+      { source: "/directory", destination: "/browse", permanent: true },
+    ];
   },
   async headers() {
     // Allow the widget script + track endpoint to be loaded/called cross-origin

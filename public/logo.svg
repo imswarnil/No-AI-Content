@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 64" role="img" aria-label="NAC — No AI Content">
+  <!-- NAC lockup: the seal mark + wordmark. Inherit-friendly: text uses currentColor. -->
+  <g>
+    <rect x="2" y="2" width="60" height="60" rx="14" fill="#157a45"/>
+    <circle cx="32" cy="32" r="22.5" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="2.4" stroke-dasharray="5.4 3.8"/>
+    <path d="M32 17.5c4.9 0 8 6.6 8 12.8L32 40.5l-8-10.2c0-6.2 3.1-12.8 8-12.8Z"
+          fill="none" stroke="#fff" stroke-width="3.4" stroke-linejoin="round"/>
+    <path d="M32 26.8v11.4" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="32" cy="26" r="2.6" fill="#fff"/>
+  </g>
+  <text x="76" y="37" font-family="'Fraunces',Georgia,serif" font-weight="700"
+        font-size="30" letter-spacing="1" fill="currentColor">NAC</text>
+  <text x="76" y="53" font-family="'IBM Plex Mono',ui-monospace,monospace" font-weight="500"
+        font-size="10.5" letter-spacing="2.6" fill="currentColor" opacity="0.55">NO AI CONTENT</text>
+</svg>
