@@ -1204,6 +1204,10 @@ td { font-variant-numeric: tabular-nums; }
   white-space: nowrap;
 }
 
+/* Narration toggle, lit while speech is on. */
+.scribe-btn.on { background: #157a45; border-color: #157a45; color: #fff; }
+.scribe-btn.on:hover { background: #116037; }
+
 @media (max-width: 620px) {
   .scribe-bar { gap: var(--space-2); padding-inline: var(--space-4); }
   .scribe-btn.wide { padding-inline: var(--space-3); }

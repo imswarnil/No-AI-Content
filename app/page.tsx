@@ -169,6 +169,22 @@ export default function Home() {
 
   useEffect(() => setOrigin(window.location.origin), []);
 
+  /* The snippet people copy must point at the PUBLIC instance, never at
+     whatever origin the builder happens to be open on. Using
+     window.location.origin meant a snippet built while viewing localhost (or a
+     Vercel preview) shipped as
+     `src="http://localhost:3000/widget.js"` — on a real site that script never
+     loads, so no badge renders, no tracking ping fires, and the site never
+     appears on the roll. That is exactly the "I added it and nothing shows up"
+     failure, and it is silent: the builder's own preview looks perfect,
+     because locally that URL resolves.
+
+     The live preview below still uses `origin`, so local development of
+     widget.js keeps working against the local copy. */
+  const publicOrigin = (
+    process.env.NEXT_PUBLIC_SITE_URL || origin || "https://nac.imswarnil.com"
+  ).replace(/\/+$/, "");
+
   // Any badge on the page — including the nine in the style gallery — asks the
   // host to explain itself through a cancelable event. Calling preventDefault
   // tells the widget we handled it, so it doesn't also open a second copy in a
@@ -186,7 +202,7 @@ export default function Home() {
 
   const embedCode = useMemo(() => {
     const attrs = [
-      `src="${origin}/widget.js"`,
+      `src="${publicOrigin}/widget.js"`,
       author ? `data-author="${escapeAttr(author)}"` : "",
       `data-message="${escapeAttr(message)}"`,
       `data-style="${style}"`,
@@ -198,7 +214,7 @@ export default function Home() {
       .filter(Boolean)
       .join("\n  ");
     return `<script\n  ${attrs}\n></script>`;
-  }, [origin, author, message, style, theme, region, category]);
+  }, [publicOrigin, author, message, style, theme, region, category]);
 
   async function copy() {
     await navigator.clipboard.writeText(embedCode);

@@ -14,6 +14,27 @@ export function OPTIONS() {
   return new NextResponse(null, { status: 204, headers: CORS });
 }
 
+/**
+ * Hosts that must never reach the public roll. The roll is a list of real,
+ * visitable sites; a development machine is neither. `localhost` used to be
+ * allowed explicitly, which is how test traffic ended up published alongside
+ * genuine members.
+ *
+ * Bare IPs are rejected too — not because they can't serve a site, but because
+ * nothing on the roll should be an address a reader can't meaningfully visit
+ * or verify, and private ranges leak internal infrastructure.
+ */
+function isPublicHost(d: string): boolean {
+  if (d === "localhost" || d.endsWith(".localhost") || d.endsWith(".local")) return false;
+  if (d === "::1" || d === "0.0.0.0") return false;
+  // Any bare IPv4, including the private ranges.
+  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(d)) return false;
+  // Common local-development and internal suffixes.
+  if (/\.(test|invalid|example|internal|lan|home|localdomain)$/.test(d)) return false;
+  // Must be a plausible public hostname with a real TLD.
+  return /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*\.[a-z]{2,}$/.test(d);
+}
+
 /** Normalize a hostname: strip protocol, path, port, leading "www." and lowercase. */
 function cleanDomain(raw: unknown): string | null {
   if (typeof raw !== "string") return null;
@@ -21,8 +42,7 @@ function cleanDomain(raw: unknown): string | null {
   if (!d) return null;
   d = d.replace(/^https?:\/\//, "").split("/")[0].split(":")[0];
   d = d.replace(/^www\./, "");
-  // Basic sanity: must contain a dot or be localhost.
-  if (d !== "localhost" && !/^[a-z0-9.-]+\.[a-z]{2,}$/.test(d)) return null;
+  if (!isPublicHost(d)) return null;
   return d.slice(0, 253);
 }
 

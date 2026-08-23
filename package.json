@@ -9,7 +9,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "db:init": "node --loader ts-node/esm scripts/init-db.mjs"
+    "db:init": "node --loader ts-node/esm scripts/init-db.mjs",
+    "stats:reset": "node scripts/reset-stats.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.110.0",

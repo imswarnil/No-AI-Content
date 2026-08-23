@@ -25,11 +25,17 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
  */
 
 const BOARD_W = 2000;
-const BOARD_H = 1400;
+/** Three rows: six chapters, then the closing seal centred beneath them. */
+const BOARD_H = 2060;
 const CELL_W = 560;
 const CELL_H = 560;
 
-/** Where each chapter's cell sits on the board (3 across, 2 down). */
+/* The camera frames to a fixed 10:7 window rather than to the board's own
+   aspect — the board grew a third row for the ending, and tying the framing to
+   its proportions would have zoomed every chapter out to compensate. */
+const VIEW_ASPECT = 10 / 7;
+
+/** Where a cell sits on the board (3 across). */
 function cell(i: number) {
   return { x: 60 + (i % 3) * 640, y: 60 + Math.floor(i / 3) * 660 };
 }
@@ -42,6 +48,10 @@ type Chapter = {
   lines: string[];
   /** Optional smaller aside under them. */
   note?: string;
+  /** Spoken aloud when the chapter's text starts being written. */
+  narration: string;
+  /** Which grid cell to occupy. Defaults to the chapter's position. */
+  at?: number;
 };
 
 /* Art is written in a local 0–560 box; each chapter is translated into its
@@ -50,6 +60,8 @@ const CHAPTERS: Chapter[] = [
   {
     id: "old-web",
     lines: ["Someone had", "something to say."],
+    narration:
+      "The web used to be full of people with something to say. A point of view, lived detail, and the odd rough edge that proved a person was there.",
     strokes: [
       { d: "M150 40h210l60 60v250H150z" },
       { d: "M360 40v60h60" },
@@ -64,6 +76,8 @@ const CHAPTERS: Chapter[] = [
     id: "flood",
     lines: ["Then everything", "started to rhyme."],
     note: "Fluent, confident, saying nothing at all.",
+    narration:
+      "Then everything started to rhyme. Pages spun up by the thousand — fluent, confident, and saying nothing at all.",
     strokes: [
       { d: "M90 60h110v150H90z" },
       { d: "M110 95h70M110 125h70M110 155h50" },
@@ -83,6 +97,8 @@ const CHAPTERS: Chapter[] = [
     id: "why",
     lines: ["I like AI. I just don't", "like AI-generated content."],
     note: "I can't fully explain why. So I built this instead of complaining.",
+    narration:
+      "Here's the honest part. I like A-I. I use it every day and I'm glad it exists. I just don't like A-I generated content. Reading a page no person actually wrote puts me off, and I can't fully explain why. So I built this instead of complaining.",
     strokes: [
       // the tool: chip → pen → tick
       { d: "M70 70h90v70H70z" },
@@ -109,6 +125,8 @@ const CHAPTERS: Chapter[] = [
     id: "line",
     lines: ["The line isn't", "AI or no AI."],
     note: "Use it to sharpen. Just don't hand over the thinking.",
+    narration:
+      "So the line isn't A-I or no A-I. Use it to sharpen a sentence, or to argue with an idea. Just don't hand over the thinking.",
     strokes: [
       { d: "M280 60v260" },
       { d: "M140 130h280" },
@@ -121,6 +139,8 @@ const CHAPTERS: Chapter[] = [
   {
     id: "seal",
     lines: ["So: press", "a seal on it."],
+    narration:
+      "So we made a seal. A notary-style mark you press onto your own work. Not a verdict handed down by a detector — a signature.",
     strokes: [
       { d: "M280 60a130 130 0 1 1-.1 0z", accent: "green", width: 6 },
       { d: "M280 100a90 90 0 1 1-.1 0z" },
@@ -133,6 +153,8 @@ const CHAPTERS: Chapter[] = [
     id: "roll",
     lines: ["One line of code.", "You're on the roll."],
     note: "A public list of people who still write their own words.",
+    narration:
+      "One line of code, and you're on the roll: a public list of people who still write their own words. Every listing is re-checked, so the roll stays honest.",
     strokes: [
       { d: "M100 70h360v60H100z" },
       { d: "M120 100h180" },
@@ -145,6 +167,26 @@ const CHAPTERS: Chapter[] = [
       { d: "M330 268l16 16 26-30", accent: "green", width: 6 },
       { d: "M100 340h360v60H100z" },
       { d: "M120 370h120" },
+    ],
+  },
+  /* The close. The story used to end on a silent hold over the finished board,
+     which read as "the animation stopped" rather than as an ending. Now the
+     camera comes down to the mark itself and stamps it, so the last thing on
+     screen is the thing you're being asked to look for. `at: 7` centres it in
+     the third row, under the six chapters. */
+  {
+    id: "close",
+    at: 7,
+    lines: ["NO AI CONTENT"],
+    note: "Look for the seal — then go and read the people behind it.",
+    narration:
+      "This is the seal. No A-I content. If a human wrote it, they can say so — look for the mark, and go find the people behind it.",
+    strokes: [
+      { d: "M280 40a160 160 0 1 1-.1 0z", accent: "green", width: 7 },
+      { d: "M280 78a122 122 0 1 1-.1 0z", width: 4 },
+      { d: "M280 128c30 0 48 36 48 78l-48 62-48-62c0-42 18-78 48-78z", accent: "green", width: 6 },
+      { d: "M280 200v80", accent: "green", width: 6 },
+      { d: "M120 380h320" },
     ],
   },
 ];
@@ -168,6 +210,25 @@ type Act =
   | { kind: "stroke"; t0: number; t1: number; i: number; len: number; ox: number; oy: number }
   | { kind: "text"; t0: number; t1: number; i: number; x: number; y: number; w: number };
 
+/* ---------------- Narration ----------------
+   Web Speech, which every current browser ships and which costs nothing to
+   run. Wrapped so the rest of the component never has to care whether the API
+   exists — on a browser without it these are no-ops and the animation plays
+   silently. */
+function say(text: string) {
+  const synth = typeof window !== "undefined" ? window.speechSynthesis : undefined;
+  if (!synth) return;
+  synth.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.rate = 1;
+  u.pitch = 1;
+  u.lang = "en-GB";
+  synth.speak(u);
+}
+function hush() {
+  if (typeof window !== "undefined") window.speechSynthesis?.cancel();
+}
+
 function lerp(a: number, b: number, p: number) {
   return a + (b - a) * p;
 }
@@ -186,7 +247,7 @@ function frame(b: Box): Box {
   const pad = 150;
   let w = b.w + pad * 2;
   let h = b.h + pad * 2;
-  const aspect = BOARD_W / BOARD_H;
+  const aspect = VIEW_ASPECT;
   if (w / h > aspect) h = w / aspect;
   else w = h * aspect;
 
@@ -213,17 +274,26 @@ export default function StoryCanvas({ open, onClose }: { open: boolean; onClose:
   const [progress, setProgress] = useState(0);
   const [done, setDone] = useState(false);
 
+  // Narration starts muted. It is triggered by a click so the browser would
+  // allow it, but a page that starts talking at you unannounced is hostile —
+  // the control is right there in the bar, and the choice is remembered.
+  const [muted, setMuted] = useState(true);
+
   const acts = useRef<Act[]>([]);
   const total = useRef(1);
   const clock = useRef(0);
   const raf = useRef(0);
   const reduced = useRef(false);
+  /** When each chapter's narration should begin, in clock milliseconds. */
+  const cues = useRef<{ t: number; text: string }[]>([]);
+  /** Index of the cue currently being spoken, so it isn't restarted each frame. */
+  const spoken = useRef(-1);
 
   // Flatten the chapters into index-addressable lists once, so refs line up.
   const strokeList: { s: Stroke; ox: number; oy: number }[] = [];
   const textList: { text: string; x: number; y: number; size: number; weight: number }[] = [];
   CHAPTERS.forEach((ch, ci) => {
-    const c = cell(ci);
+    const c = cell(ch.at ?? ci);
     ch.strokes.forEach((s) => strokeList.push({ s, ox: c.x, oy: c.y }));
     ch.lines.forEach((line, li) => {
       textList.push({ text: line, x: c.x + 40, y: c.y + 430 + li * 56, size: 46, weight: 700 });
@@ -323,13 +393,14 @@ export default function StoryCanvas({ open, onClose }: { open: boolean; onClose:
       reduced.current = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
       const list: Act[] = [];
+      const cueList: { t: number; text: string }[] = [];
       let t = 0;
       let cam: Box = frame({ x: 0, y: 0, w: BOARD_W, h: BOARD_H });
       let si = 0;
       let ti = 0;
 
       CHAPTERS.forEach((ch, ci) => {
-        const c = cell(ci);
+        const c = cell(ch.at ?? ci);
         const to = frame({ x: c.x, y: c.y, w: CELL_W, h: CELL_H });
         list.push({ kind: "camera", t0: t, t1: t + CAMERA_MS, from: cam, to });
         cam = to;
@@ -362,6 +433,9 @@ export default function StoryCanvas({ open, onClose }: { open: boolean; onClose:
 
         t += 160;
 
+        // The chapter speaks as its words start being written.
+        cueList.push({ t, text: ch.narration });
+
         const lineCount = ch.lines.length + (ch.note ? 1 : 0);
         for (let n = 0; n < lineCount; n += 1) {
           const el = textRefs.current[ti];
@@ -380,6 +454,7 @@ export default function StoryCanvas({ open, onClose }: { open: boolean; onClose:
       t += END_ZOOM_MS + END_HOLD_MS;
 
       acts.current = list;
+      cues.current = cueList;
       total.current = t;
       paint(0); // start from a blank board rather than whatever markup renders
       setReady(true);
@@ -413,6 +488,17 @@ export default function StoryCanvas({ open, onClose }: { open: boolean; onClose:
         clock.current = Math.min(total.current, clock.current + dt);
         paint(clock.current);
         setProgress(clock.current / total.current);
+
+        // Speak the chapter the clock has reached, once.
+        let cue = -1;
+        for (let n = 0; n < cues.current.length; n += 1) {
+          if (clock.current >= cues.current[n].t) cue = n;
+        }
+        if (cue !== spoken.current) {
+          spoken.current = cue;
+          if (!muted && cue >= 0) say(cues.current[cue].text);
+        }
+
         if (clock.current >= total.current) {
           setPlaying(false);
           setDone(true);
@@ -422,7 +508,38 @@ export default function StoryCanvas({ open, onClose }: { open: boolean; onClose:
     };
     raf.current = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf.current);
-  }, [open, ready, playing, paint]);
+  }, [open, ready, playing, paint, muted]);
+
+  /* Narration follows the transport. Pausing the animation while a sentence
+     keeps talking over a frozen board is the kind of detail that makes a thing
+     feel broken. */
+  useEffect(() => {
+    if (!open) return;
+    const synth = window.speechSynthesis;
+    if (!synth) return;
+    if (playing) synth.resume();
+    else synth.pause();
+  }, [open, playing]);
+
+  // Remember the choice, and re-speak the current chapter when unmuting.
+  useEffect(() => {
+    try {
+      localStorage.setItem("nac_story_muted", muted ? "1" : "0");
+    } catch {
+      /* private mode — the preference just won't persist */
+    }
+    if (muted) hush();
+    else spoken.current = -1;
+  }, [muted]);
+
+  useEffect(() => {
+    try {
+      const v = localStorage.getItem("nac_story_muted");
+      if (v !== null) setMuted(v === "1");
+    } catch {
+      /* fall back to the default */
+    }
+  }, []);
 
   // Reset whenever the player is opened.
   useEffect(() => {
@@ -449,6 +566,8 @@ export default function StoryCanvas({ open, onClose }: { open: boolean; onClose:
     return () => {
       window.removeEventListener("keydown", onKey);
       document.body.style.overflow = prev;
+      // Closing the player must stop the voice; speech outlives the component.
+      hush();
     };
   }, [open, onClose]);
 
@@ -457,6 +576,9 @@ export default function StoryCanvas({ open, onClose }: { open: boolean; onClose:
     paint(clock.current);
     setProgress(p);
     setDone(p >= 0.999);
+    // Jumping elsewhere invalidates whatever is mid-sentence.
+    hush();
+    spoken.current = -1;
   };
 
   if (!open) return null;
@@ -475,7 +597,7 @@ export default function StoryCanvas({ open, onClose }: { open: boolean; onClose:
           focusable="false"
         >
           {CHAPTERS.map((ch, ci) => {
-            const c = cell(ci);
+            const c = cell(ch.at ?? ci);
             return (
               <g key={ch.id} transform={`translate(${c.x} ${c.y})`}>
                 {ch.strokes.map((s, n) => {
@@ -567,6 +689,15 @@ export default function StoryCanvas({ open, onClose }: { open: boolean; onClose:
           aria-label={playing ? "Pause" : "Play"}
         >
           {playing ? "❚❚" : "▶"}
+        </button>
+        <button
+          className={`scribe-btn ${muted ? "" : "on"}`}
+          onClick={() => setMuted((m) => !m)}
+          aria-pressed={!muted}
+          aria-label={muted ? "Turn narration on" : "Turn narration off"}
+          title={muted ? "Narration off" : "Narration on"}
+        >
+          {muted ? "🔇" : "🔊"}
         </button>
         <input
           className="scribe-seek"

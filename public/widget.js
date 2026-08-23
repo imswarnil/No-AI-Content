@@ -407,23 +407,33 @@
 
   script.parentNode.insertBefore(container, script.nextSibling);
 
-  /* ---------------- Tracking ping (domain-only, no PII) ---------------- */
+  /* ---------------- Tracking ping (domain-only, no PII) ----------------
+
+     Never ping when the badge is being served by the same origin as the page
+     it's on. That means it's a preview on the NAC site itself, not an embed on
+     somebody's blog — and the NAC homepage renders TEN badges (nine style
+     samples plus the builder preview), so every single visit was logging ten
+     hits against our own domain and putting NAC on its own roll of members.
+     The same guard covers preview deployments, which were showing up as
+     members too. */
   try {
-    var payload = JSON.stringify({
-      domain: location.hostname,
-      author: author || null,
-      message: message || null,
-      region: region || null,
-      category: category || null,
-    });
-    if (navigator.sendBeacon) navigator.sendBeacon(base + "/api/track", payload);
-    else
-      fetch(base + "/api/track", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: payload,
-        keepalive: true,
-        mode: "no-cors",
+    if (location.origin !== base) {
+      var payload = JSON.stringify({
+        domain: location.hostname,
+        author: author || null,
+        message: message || null,
+        region: region || null,
+        category: category || null,
       });
+      if (navigator.sendBeacon) navigator.sendBeacon(base + "/api/track", payload);
+      else
+        fetch(base + "/api/track", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: payload,
+          keepalive: true,
+          mode: "no-cors",
+        });
+    }
   } catch (e) {}
 })();
