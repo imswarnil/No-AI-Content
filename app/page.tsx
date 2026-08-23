@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Share from "./components/Share";
+import StoryCanvas from "./components/StoryCanvas";
 import Pulse from "./components/Pulse";
 import { useRevealOnScroll } from "./components/reveal";
 import {
@@ -22,6 +23,7 @@ import {
   IconSearch,
   IconCheck,
   IconArrowRight,
+  IconPlay,
 } from "./components/icons";
 import { CATEGORIES, REGIONS } from "@/lib/taxonomy";
 
@@ -163,20 +165,22 @@ export default function Home() {
   const [category, setCategory] = useState("");
   const [origin, setOrigin] = useState("");
   const [copied, setCopied] = useState(false);
+  const [storyOpen, setStoryOpen] = useState(false);
 
   useEffect(() => setOrigin(window.location.origin), []);
 
-  // A badge embedded on someone else's blog asks the page to explain itself.
-  // The explanation is this page, so send them to the top of the argument.
+  // Any badge on the page — including the nine in the style gallery — asks the
+  // host to explain itself through a cancelable event. Calling preventDefault
+  // tells the widget we handled it, so it doesn't also open a second copy in a
+  // new tab. `?story=1` is the same entry point for a badge clicked on
+  // somebody else's blog.
   useEffect(() => {
     const onExplain = (e: Event) => {
       e.preventDefault();
-      document.getElementById("why")?.scrollIntoView({ behavior: "smooth" });
+      setStoryOpen(true);
     };
     window.addEventListener("nac:explain", onExplain);
-    if (new URLSearchParams(window.location.search).get("story")) {
-      document.getElementById("why")?.scrollIntoView();
-    }
+    if (new URLSearchParams(window.location.search).get("story")) setStoryOpen(true);
     return () => window.removeEventListener("nac:explain", onExplain);
   }, []);
 
@@ -220,9 +224,9 @@ export default function Home() {
               <a className="btn primary lg" href="#build">
                 Create your badge
               </a>
-              <a className="btn lg" href="#why">
-                Read why it exists
-              </a>
+              <button className="btn lg" onClick={() => setStoryOpen(true)}>
+                <IconPlay size={15} /> Watch the story
+              </button>
             </div>
             <p className="hero-note">No account. No cost. Only your domain is ever recorded.</p>
           </div>
@@ -675,6 +679,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <StoryCanvas open={storyOpen} onClose={() => setStoryOpen(false)} />
     </>
   );
 }
