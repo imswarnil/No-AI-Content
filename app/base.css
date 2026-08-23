@@ -95,7 +95,6 @@
   /* ---------- Sizing ---------- */
   --nav-h: 4rem;
   --site-w: 68rem;
-  --content-w: 62rem;
   --text-w: 40rem;
   --gutter: clamp(1.25rem, 0.6rem + 2.6vw, 2.5rem);
   --control-h: 2.375rem;

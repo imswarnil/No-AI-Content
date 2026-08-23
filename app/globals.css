@@ -101,7 +101,10 @@
     align-items: stretch;
     gap: 0;
     margin: 0;
-    padding: var(--space-2);
+    /* Inset so a link's text starts on the same gutter as the brand above it
+       — the link itself carries --space-3 of padding, so the sheet subtracts
+       that from the gutter rather than adding to it. */
+    padding: var(--space-2) max(0px, calc(var(--gutter) - var(--space-3)));
     background: var(--bg-surface);
     border-bottom: 1px solid var(--border);
     box-shadow: var(--shadow-md);
@@ -175,7 +178,7 @@
    headings that get their weight from size rather than decoration.
    ========================================================================== */
 .container { width: 100%; max-width: var(--site-w); margin-inline: auto; padding-inline: var(--gutter); }
-.container.narrow { max-width: var(--content-w); }
+.container.narrow { max-width: 52rem; }
 
 .section { padding-block: var(--space-8); }
 .section.tight { padding-block: var(--space-6); }
@@ -183,14 +186,17 @@
 .section + .section:not(.sunken) { padding-top: var(--space-7); }
 .section.sunken { background: var(--bg-surface); border-block: 1px solid var(--border); }
 
-/* Inner pages keep using `.page` — a container with page padding. */
+/* Inner pages keep using `.page` — a container with page padding. It shares
+   --site-w with the header and footer so the left edge of a page title lines
+   up with the brand above it and the footer below it; at 62rem the content
+   sat ~3rem inboard of both, which reads as a misprint. Reading measure is
+   handled per-element (`.page-sub`, `.prose`), not by narrowing the shell. */
 .page {
   width: 100%;
-  max-width: var(--content-w);
+  max-width: var(--site-w);
   margin-inline: auto;
   padding: var(--space-7) var(--gutter) var(--space-8);
 }
-.page.wide { max-width: var(--site-w); }
 
 .page-head { margin-bottom: var(--space-6); }
 .page-head h1 { margin: 0; }
