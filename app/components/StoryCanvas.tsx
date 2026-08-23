@@ -449,9 +449,21 @@ export default function StoryCanvas({ open, onClose }: { open: boolean; onClose:
         t += HOLD_MS;
       });
 
+      /* The ending is two moves, not one. Pull back so the whole argument is
+         visible at once — that's the payoff for having drawn it all on one
+         board — but don't stop there: at this size everything is too small to
+         read, because fitting a three-row board into the view leaves wide
+         empty margins. So hold briefly, then push back in and rest on the
+         seal, which is the thing the story is asking you to look for. */
       const whole = frame({ x: 0, y: 0, w: BOARD_W, h: BOARD_H });
       list.push({ kind: "camera", t0: t, t1: t + END_ZOOM_MS, from: cam, to: whole });
-      t += END_ZOOM_MS + END_HOLD_MS;
+      t += END_ZOOM_MS + 1100;
+
+      const closing = CHAPTERS[CHAPTERS.length - 1];
+      const cc = cell(closing.at ?? CHAPTERS.length - 1);
+      const closeBox = frame({ x: cc.x, y: cc.y, w: CELL_W, h: CELL_H });
+      list.push({ kind: "camera", t0: t, t1: t + 900, from: whole, to: closeBox });
+      t += 900 + END_HOLD_MS;
 
       acts.current = list;
       cues.current = cueList;
