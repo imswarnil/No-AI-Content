@@ -25,26 +25,26 @@ const NOT_ALLOWED = [
 
 export default function Eligibility() {
   return (
-    <main>
-      <section className="hero">
-        <div className="hero-inner">
-          <span className="pill-tag">
-            <IconScale size={13} /> The honest line
-          </span>
-          <h1>
-            What counts as <span className="grad">human-written</span>?
-          </h1>
-          <p className="lede">
-            This isn&apos;t anti-AI. It&apos;s pro-human. Use AI to sharpen your thinking and polish
-            your words — just don&apos;t let it do the writing and thinking for you.
-          </p>
-        </div>
-      </section>
+    <div className="page">
+      <div className="stack">
+        <header className="page-head">
+          <div>
+            <span className="pill-tag">
+              <IconScale size={12} /> The honest line
+            </span>
+            <h1>What counts as human-written?</h1>
+            <p className="page-sub">
+              This isn&apos;t anti-AI. It&apos;s pro-human. Use AI to sharpen your thinking and
+              polish your words — just don&apos;t let it do the writing and thinking for you.
+            </p>
+          </div>
+        </header>
 
-      <section className="section">
         <div className="elig-grid">
           <div className="elig-card ok">
-            <h2><IconCheck size={19} /> Allowed — you still qualify</h2>
+            <h2>
+              <IconCheck size={17} /> Allowed — you still qualify
+            </h2>
             <ul>
               {ALLOWED.map(([t, d]) => (
                 <li key={t}>
@@ -55,7 +55,9 @@ export default function Eligibility() {
             </ul>
           </div>
           <div className="elig-card no">
-            <h2><IconX size={19} /> Not allowed — disqualifies</h2>
+            <h2>
+              <IconX size={17} /> Not allowed — disqualifies
+            </h2>
             <ul>
               {NOT_ALLOWED.map(([t, d]) => (
                 <li key={t}>
@@ -67,20 +69,26 @@ export default function Eligibility() {
           </div>
         </div>
 
-        <div className="card" style={{ marginTop: 24, textAlign: "center" }}>
-          <p className="muted" style={{ marginBottom: 16 }}>
-            The rule of thumb: <strong>if a reader deleted the AI&apos;s contribution, your post
-            should still exist.</strong> The ideas and the words are yours; AI just helps you say
-            them better.
-          </p>
-          <Link className="btn" href="/#build">
-            I qualify — make my stamp
-          </Link>{" "}
-          <Link className="btn ghost" href="/check">
-            Verify my site first
-          </Link>
+        <div className="panel">
+          <div className="panel-head">
+            <div>
+              <h2>The rule of thumb</h2>
+              <p>
+                If a reader deleted the AI&apos;s contribution, your post should still exist. The
+                ideas and the words are yours; AI just helps you say them better.
+              </p>
+            </div>
+            <div className="page-actions">
+              <Link className="btn" href="/check">
+                Verify my site first
+              </Link>
+              <Link className="btn primary" href="/#build">
+                I qualify — make my badge
+              </Link>
+            </div>
+          </div>
         </div>
-      </section>
-    </main>
+      </div>
+    </div>
   );
 }

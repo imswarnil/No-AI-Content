@@ -70,44 +70,37 @@ export default async function Browse({
   const all = await getSites();
 
   return (
-    <main>
-      <section className="hero short">
-        <div className="hero-inner">
-          <span className="pill-tag">
-            <IconFeather size={13} /> The roll of humans
-          </span>
-          <h1>
-            Browse blogs written <span className="grad">by hand</span>.
-          </h1>
-          <p className="lede">
+    <div className="page wide">
+      <div className="stack">
+        <header className="page-head">
+          <div>
+            <span className="pill-tag">
+              <IconFeather size={12} /> The roll of humans
+            </span>
+            <h1>Blogs written by hand</h1>
+            <p className="page-sub">
             {all.length > 0
               ? `${all.length} site${all.length === 1 ? "" : "s"} proudly display the No AI Content stamp. Filter by what they write about and where they write from.`
               : "Be the first to add the No AI Content stamp to your site."}
-          </p>
-          <p className="lede" style={{ fontSize: "0.95rem" }}>
-            This page is why NAC exists: a place where readers who are tired of machine-generated
-            feeds can find people who still think and write for themselves. Every stamp placed on a
-            blog adds it here — and every listing is re-verified, so the roll stays honest.
-          </p>
-          <div className="hero-cta">
-            <Link className="btn lg" href="/#build">
-              Add your site
-            </Link>
-            <Link className="btn lg ghost" href="/check">
+            </p>
+          </div>
+          <div className="page-actions">
+            <Link className="btn" href="/check">
               Verify writing first
             </Link>
+            <Link className="btn primary" href="/#build">
+              Add your site
+            </Link>
           </div>
-        </div>
-      </section>
+        </header>
 
-      <section className="section wide">
         <BrowseClient
           sites={all.map(({ check_at, has_widget, last_seen, ...s }) => s)}
           initialRegions={searchParams.region || ""}
           initialCategories={searchParams.category || ""}
           initialQuery={searchParams.q || ""}
         />
-      </section>
-    </main>
+      </div>
+    </div>
   );
 }

@@ -53,15 +53,18 @@ export default function Dashboard() {
   }
 
   return (
-    <main className="container">
-      <div style={{ textAlign: "center", padding: "2.5rem 0 1.5rem" }}>
-        <h1>Usage dashboard</h1>
-        <p className="muted">Sites currently embedding your No AI Content badge.</p>
-      </div>
+    <div className="page">
+      <div className="stack">
+        <header className="page-head">
+          <div>
+            <h1>Usage dashboard</h1>
+            <p className="page-sub">Sites currently embedding your No AI Content badge.</p>
+          </div>
+        </header>
 
       <div className="card">
         <label>Admin token</label>
-        <div style={{ display: "flex", gap: 12 }}>
+        <div className="check-box">
           <input
             type="password"
             value={token}
@@ -69,12 +72,12 @@ export default function Dashboard() {
             placeholder="Your ADMIN_TOKEN"
             onKeyDown={(e) => e.key === "Enter" && load(token)}
           />
-          <button className="btn" onClick={() => load(token)} disabled={loading}>
+          <button className="btn primary" onClick={() => load(token)} disabled={loading}>
             {loading ? "Loading…" : "Load"}
           </button>
         </div>
         {error && (
-          <p style={{ color: "#dc2626", marginTop: 12, fontSize: 14, display: "flex", alignItems: "center", gap: 6 }}>
+          <p className="form-error">
             <IconAlert size={15} /> {error}
           </p>
         )}
@@ -82,7 +85,7 @@ export default function Dashboard() {
 
       {data && (
         <>
-          <div className="stat-grid" style={{ marginTop: 24 }}>
+          <div className="stat-grid">
             <div className="stat">
               <div className="num">{data.count}</div>
               <div className="lbl">Sites using the badge</div>
@@ -99,12 +102,17 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div className="card">
-            <h2>Embedding sites</h2>
+          <div className="panel">
+            <div className="panel-head">
+              <h2>Embedding sites</h2>
+              <span className="badge">{data.sites.length}</span>
+            </div>
             {data.sites.length === 0 ? (
-              <p className="muted">No sites yet. Once someone embeds the widget, they’ll appear here.</p>
+              <div className="panel-body">
+                <p className="muted">No sites yet. Once someone embeds the widget, they’ll appear here.</p>
+              </div>
             ) : (
-              <div style={{ overflowX: "auto" }}>
+              <div className="table-wrap">
                 <table>
                   <thead>
                     <tr>
@@ -154,7 +162,8 @@ export default function Dashboard() {
           </div>
         </>
       )}
-    </main>
+      </div>
+    </div>
   );
 }
 

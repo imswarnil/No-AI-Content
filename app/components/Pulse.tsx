@@ -81,10 +81,10 @@ export default function Pulse() {
           </>
         ) : (
           <div className="pulse-btns">
-            <button className="btn" onClick={() => vote("agree")} disabled={busy}>
+            <button className="btn primary" onClick={() => vote("agree")} disabled={busy}>
               Yes, same here
             </button>
-            <button className="btn ghost" onClick={() => vote("disagree")} disabled={busy}>
+            <button className="btn" onClick={() => vote("disagree")} disabled={busy}>
               Not really
             </button>
             {total > 0 && (

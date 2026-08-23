@@ -99,23 +99,26 @@ export default function Check() {
   const v = det ? VERDICT[det.verdict] : null;
 
   return (
-    <main>
-      <section className="hero">
-        <div className="hero-inner">
-          <span className="pill-tag">
-            <IconSearch size={13} /> The verification layer
-          </span>
-          <h1>
-            How <span className="grad">AI-like</span> does it read?
-          </h1>
-          <p className="lede">
+    <div className="page">
+      <div className="stack">
+        <header className="page-head">
+          <div>
+            <span className="pill-tag">
+              <IconSearch size={12} /> The verification layer
+            </span>
+            <h1>How AI-like does it read?</h1>
+            <p className="page-sub">
             This is the testing layer behind the stamp: anyone requesting the NAC seal can run
             their site or text through it first. A transparent, signal-based score — no black box —
             showing exactly which patterns pushed the result, plus optional second opinions from
-            Claude and third-party detectors.
-          </p>
+              Claude and third-party detectors.
+            </p>
+          </div>
+        </header>
 
-          <div className="mode-toggle">
+        <div className="panel">
+          <div className="panel-body">
+            <div className="mode-toggle">
             <button className={mode === "url" ? "on" : ""} onClick={() => setMode("url")}>
               From a URL
             </button>
@@ -132,38 +135,44 @@ export default function Check() {
                 placeholder="https://your-blog.com/a-post"
                 onKeyDown={(e) => e.key === "Enter" && run()}
               />
-              <button className="btn lg" onClick={run} disabled={loading}>
+              <button className="btn primary" onClick={run} disabled={loading}>
                 {loading ? "Reading…" : "Analyze"}
               </button>
             </div>
           ) : (
-            <div style={{ maxWidth: 620, margin: "22px auto 12px" }}>
+            <div>
               <textarea
                 rows={7}
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 placeholder="Paste at least a few paragraphs of writing…"
-                style={{ width: "100%", padding: 14, borderRadius: 12, border: "1px solid var(--border)", fontSize: 15, fontFamily: "inherit" }}
+                aria-label="Text to analyze"
               />
-              <button className="btn lg" onClick={run} disabled={loading} style={{ marginTop: 12 }}>
+              <button
+                className="btn primary"
+                onClick={run}
+                disabled={loading}
+                style={{ marginTop: "var(--space-3)" }}
+              >
                 {loading ? "Analyzing…" : "Analyze"}
               </button>
             </div>
           )}
 
-          <p className="disclaimer">
-            <IconAlert size={14} /> Honest by design: this is a{" "}
-            <strong>heuristic signal score, not proof</strong>. No
-            tool can reliably detect AI — real human writing gets false-flagged all the time. Use it
-            to improve, never to accuse.
-          </p>
+            <p className="disclaimer">
+              <IconAlert size={14} />
+              <span>
+                Honest by design: this is a <strong>heuristic signal score, not proof</strong>. No
+                tool can reliably detect AI — real human writing gets false-flagged all the time.
+                Use it to improve, never to accuse.
+              </span>
+            </p>
+          </div>
         </div>
-      </section>
 
-      <section className="section" style={{ paddingTop: 12 }}>
         {error && (
-          <div className="card" style={{ borderColor: "#fecaca" }}>
-            <p style={{ color: "#dc2626", margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
+          <div className="card">
+            <p className="form-error" style={{ marginTop: 0 }}>
               <IconAlert size={16} /> {error}
             </p>
           </div>
@@ -186,9 +195,9 @@ export default function Check() {
               </div>
             </div>
 
-            <div className="card" style={{ marginTop: 18 }}>
-              <h2 style={{ marginTop: 0 }}>Why — the signals</h2>
-              <p className="muted" style={{ marginTop: -4 }}>
+            <div className="card">
+              <h2>Why — the signals</h2>
+              <p className="muted">
                 Each bar shows how AI-like that signal read. Green leans human, red leans AI.
               </p>
               <div className="sig-list">
@@ -210,9 +219,9 @@ export default function Check() {
             </div>
 
             {det.matches.length > 0 && (
-              <div className="card" style={{ marginTop: 18 }}>
-                <h2 style={{ marginTop: 0 }}>Flagged phrases</h2>
-                <p className="muted" style={{ marginTop: -4 }}>
+              <div className="card">
+                <h2>Flagged phrases</h2>
+                <p className="muted">
                   Words and phrases LLMs over-use, found in this text. Rewriting these in your own
                   voice is the fastest way to lower the score.
                 </p>
@@ -226,7 +235,7 @@ export default function Check() {
               </div>
             )}
 
-            <div className="card" style={{ marginTop: 18, textAlign: "center" }}>
+            <div className="card" style={{ textAlign: "center" }}>
               {det.verdict === "reads_human" ? (
                 <>
                   <p style={{ marginTop: 0 }}>Reads human. Claim your stamp and get listed.</p>
@@ -244,7 +253,7 @@ export default function Check() {
               {source.startsWith("http") && (
                 <div style={{ marginTop: 14 }}>
                   {!ai && (
-                    <button className="btn ghost" onClick={secondOpinion} disabled={aiLoading}>
+                    <button className="btn" onClick={secondOpinion} disabled={aiLoading}>
                       {aiLoading ? "Asking Claude…" : "Want a deeper read? Get an AI second opinion"}
                     </button>
                   )}
@@ -261,7 +270,7 @@ export default function Check() {
             </div>
 
             {ai && (
-              <div className="card" style={{ marginTop: 18 }}>
+              <div className="card">
                 <h2 style={{ marginTop: 0, display: "flex", alignItems: "center", gap: 10 }}>
                   <IconFeather size={20} /> Claude&apos;s take — {ai.summary}
                 </h2>
@@ -278,9 +287,9 @@ export default function Check() {
               </div>
             )}
 
-            <div className="card" style={{ marginTop: 18 }}>
-              <h2 style={{ marginTop: 0 }}>Cross-check with third parties</h2>
-              <p className="muted" style={{ marginTop: -4 }}>
+            <div className="card">
+              <h2>Cross-check with third parties</h2>
+              <p className="muted">
                 No single detector should be trusted alone — including this one. If the result
                 surprised you, paste the same text into an independent service and compare. They all
                 disagree sometimes; that disagreement is the honest picture.
@@ -301,7 +310,7 @@ export default function Check() {
             </div>
           </>
         )}
-      </section>
-    </main>
+      </div>
+    </div>
   );
 }

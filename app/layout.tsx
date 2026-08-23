@@ -1,8 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./base.css";
-import "./nac-theme.css";
 import "./globals.css";
-import SiteNav from "./components/SiteNav";
+import SiteHeader from "./components/SiteHeader";
 import SiteFooter from "./components/SiteFooter";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://nac.imswarnil.com";
@@ -90,29 +89,56 @@ const JSON_LD = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#fdfcf9" },
-    { media: "(prefers-color-scheme: dark)", color: "#08080c" },
+    { media: "(prefers-color-scheme: light)", color: "#f9f9fa" },
+    { media: "(prefers-color-scheme: dark)", color: "#131417" },
   ],
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    // data-theme is stamped onto <html> by the pre-paint script below, so the
+    // client markup legitimately differs from the server's. Without this,
+    // React logs an "Extra attributes from the server: data-theme" mismatch on
+    // every single load.
+    <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
           rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Geist:wght@300..800&family=Geist+Mono:wght@400;500;600&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap"
         />
+        {/* Resolve the theme before the first paint. The toggle in the header
+            also writes data-theme, but it can only do so after hydration,
+            which meant a dark-OS visitor watched the page flash white on
+            every cold load. Kept inline and tiny so it costs no round trip. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "(function(){try{var t=localStorage.getItem('nac_theme');if(!t)t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t)}catch(e){}})()",
+          }}
+        />
+        <noscript>
+          {/* .reveal starts at opacity 0 and the SVG figures are held at
+              frame 0 until JS marks them seen. With scripting off that never
+              happens, so the page would render essentially blank. */}
+          <style>{`
+            .reveal { opacity: 1 !important; transform: none !important; }
+            .scene-art .draw { stroke-dashoffset: 0 !important; }
+            .scene-art .pop { opacity: 1 !important; }
+          `}</style>
+        </noscript>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }}
         />
       </head>
       <body>
-        <SiteNav />
-        {children}
+        <a className="skip-link" href="#main">
+          Skip to content
+        </a>
+        <SiteHeader />
+        <main id="main">{children}</main>
         <SiteFooter />
       </body>
     </html>

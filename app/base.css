@@ -1,304 +1,325 @@
 /* =============================================================================
-   NAC base — the foundation this site stands on.
+   NAC — tokens, reset, primitives.
 
-   This replaces the vendored Creator Design System. It owns three things and
-   nothing else:
+   One file, one place to change anything global. The previous build split
+   tokens across base.css + a nac-theme.css override layer and exposed a
+   14-step neutral ramp, six type scales and three radius aliases; that is more
+   machinery than a UI this size needs, and it made "change the grey" a
+   two-file operation. Everything now lives here.
 
-     1. the token scales (color, type, space, radius, shadow, motion)
-     2. the semantic layer that maps those scales to roles, per theme
-     3. a small element reset + the three primitives (.btn, .card, .chip)
-
-   Components never read a raw scale value. They read a *role*
-   (`--accent`, `--fg-muted`, `--line-default`), which is why nac-theme.css can
-   repaint the whole site by overriding ~20 declarations, and why dark mode
-   costs nothing: the roles change, the components don't know.
+   The model is an application UI, not a landing page: a light grey app canvas,
+   white panels, quiet 1px borders, 6px corners, one 14px base size. Primary
+   actions are near-black; the green is NAC's identity and is rationed to
+   state — active nav, links, focus, badges — the way Ghost's admin uses its
+   accent.
    ========================================================================== */
 
 :root {
-  /* ---------- Raw scales ----------
-     Neutrals run 0 (white) → 1000 (near-black). Everything else is a status
-     family with just the steps the UI actually uses. */
-  --ink-0:    #fff;
-  --ink-25:   #fcfcfd;
-  --ink-50:   #f8f8fa;
-  --ink-100:  #f1f1f4;
-  --ink-200:  #e5e5ea;
-  --ink-300:  #d3d3db;
-  --ink-400:  #a5a5b2;
-  --ink-500:  #76768a;
-  --ink-600:  #55556a;
-  --ink-700:  #3c3c4e;
-  --ink-800:  #272734;
-  --ink-900:  #191922;
-  --ink-950:  #101017;
-  --ink-1000: #08080c;
+  /* ---------- Neutrals ----------
+     One ramp, cool-neutral, from the app canvas down to near-black text. */
+  --grey-25:  #fdfdfd;
+  --grey-50:  #f9f9fa;
+  --grey-100: #f1f3f4;
+  --grey-200: #ebeef0;
+  --grey-300: #dde1e5;
+  --grey-400: #c5d2d9;
+  --grey-500: #abb4be;
+  --grey-600: #7c8b9a;
+  --grey-700: #626d79;
+  --grey-800: #394047;
+  --grey-900: #15171a;
+  --black:    #101114;
+  --white:    #ffffff;
 
-  /* Kept so a component that still asks for a raw accent step resolves to
-     something sane; nac-theme.css repoints the semantic roles to seal green. */
-  --signal-400: #fb7358;
-  --signal-500: #f04e2e;
+  /* ---------- Brand + status ----------
+     Only the steps the UI actually uses. */
+  --green-50:  #ecf6f0;
+  --green-100: #d1e9db;
+  --green-300: #6bb389;
+  --green-500: #1b8450;
+  --green-600: #157a45;
+  --green-700: #116037;
 
-  --mint-50:  #eafaf1;
-  --mint-500: #16a06a;
-  --mint-700: #0b6444;
-  --amber-50:  #fdf8ed;
-  --amber-200: #f2d795;
-  --amber-400: #d9a33a;
-  --amber-700: #78501f;
-  --rose-50:  #fdeef1;
-  --rose-500: #d92d4e;
-  --rose-700: #931832;
+  --red-50:   #fdeeec;
+  --red-500:  #d9483b;
+  --red-700:  #a32d22;
+  --amber-50: #fdf4e3;
+  --amber-500:#d99b23;
+  --amber-700:#875f10;
+  --blue-50:  #eef4fd;
+  --blue-500: #3b7fd9;
+  --blue-700: #22528f;
 
   /* ---------- Type ----------
-     Fluid from --text-lg up: the clamp does the work so there are no
-     per-breakpoint font-size overrides anywhere in the codebase. */
-  --text-xs:   0.75rem;
-  --text-sm:   0.8125rem;
-  --text-base: 1rem;
-  --text-md:   1.0625rem;
-  --text-lg:  clamp(1.125rem, 1.05rem + 0.32vw, 1.3125rem);
-  --text-xl:  clamp(1.3125rem, 1.19rem + 0.55vw, 1.625rem);
-  --text-2xl: clamp(1.5rem,   1.31rem + 0.83vw, 2rem);
-  --text-3xl: clamp(1.875rem, 1.55rem + 1.42vw, 2.75rem);
-  --text-4xl: clamp(2.25rem,  1.72rem + 2.36vw, 3.75rem);
-  --text-5xl: clamp(2.75rem,  1.86rem + 3.94vw, 5.25rem);
+     Fixed sizes. An app does not need viewport-fluid headings; 14px is the
+     working size and everything else steps off it. */
+  --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    Helvetica, Arial, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 
-  --leading-flat:    1;
-  --leading-tight:   1.1;
-  --leading-normal:  1.5;
+  --text-xs:   0.8125rem;  /* 13 — meta, counts, badges */
+  --text-sm:   0.875rem;   /* 14 — secondary text, table cells */
+  --text-base: 1rem;       /* 16 — body copy */
+  --text-md:   1.0625rem;  /* 17 — lead paragraphs */
+  --text-lg:   1.25rem;    /* 20 — card titles */
+  --text-xl:   1.5rem;     /* 24 */
+  --text-2xl:  1.875rem;   /* 30 — section headings */
+  --text-3xl:  2.25rem;    /* 36 — page titles */
+  /* The one fluid step: a display headline has to survive a phone. */
+  --text-4xl:  clamp(2.5rem, 1.7rem + 3.2vw, 3.75rem);
+
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
   --leading-relaxed: 1.65;
-  --leading-loose:   1.85;
 
-  --tracking-tighter: -0.035em;
-  --tracking-tight:   -0.02em;
-
-  --weight-regular:  400;
-  --weight-medium:   500;
+  --weight-normal: 400;
+  --weight-medium: 500;
   --weight-semibold: 600;
-  --weight-bold:     700;
-
-  /* Families are placeholders — nac-theme.css names the actual faces. */
-  --font-body: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-display: var(--font-body);
-  --font-slate: ui-monospace, 'SF Mono', 'Cascadia Mono', monospace;
-  --font-body-effective: var(--font-body);
-  --font-heading-effective: var(--font-display);
 
   /* ---------- Space ---------- */
-  --space-1:  0.25rem;
-  --space-2:  0.5rem;
-  --space-3:  0.75rem;
-  --space-4:  1rem;
-  --space-5:  1.25rem;
-  --space-6:  1.5rem;
-  --space-7:  1.75rem;
-  --space-8:  2rem;
-  --space-10: 2.5rem;
-  --space-12: 3rem;
-  --space-14: 3.5rem;
-  --space-16: 4rem;
-  --space-20: 5rem;
-  --space-24: 6rem;
-  --gutter: clamp(1rem, 0.55rem + 2vw, 2rem);
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 2.5rem;
+  --space-8: 3rem;
 
   /* ---------- Shape ---------- */
-  --radius-sm:  4px;
-  --radius-md:  8px;
-  --radius-lg:  12px;
-  --radius-xl:  16px;
-  --radius-2xl: 24px;
+  --radius-sm: 4px;
+  --radius: 6px;
+  --radius-lg: 8px;
   --radius-pill: 999px;
-  --radius-full: 50%;
-  --radius-control: var(--radius-md);
-  --radius-card: var(--radius-xl);
-  --radius-sheet: var(--radius-2xl);
-
-  --border-hair: 1px;
-  --border-2: 2px;
-  --border: var(--border-hair);
 
   /* ---------- Sizing ---------- */
-  --w-site: 71rem;
   --nav-h: 4rem;
-  --control-sm: 2rem;
-  --control-md: 2.5rem;
-  --control-lg: 3rem;
+  --site-w: 68rem;
+  --content-w: 62rem;
+  --text-w: 40rem;
+  --gutter: clamp(1.25rem, 0.6rem + 2.6vw, 2.5rem);
+  --control-h: 2.375rem;
+  --control-h-lg: 2.875rem;
 
-  /* ---------- Layers ---------- */
-  --z-nav: 200;
-  --z-modal: 500;
+  --z-nav: 40;
+  --z-modal: 100;
 
-  /* ---------- Depth ---------- */
-  --shadow-color: 232 20% 8%;
-  --shadow-2:
-    0 2px 4px  hsl(var(--shadow-color) / 0.06),
-    0 6px 12px hsl(var(--shadow-color) / 0.05);
-  --shadow-4:
-    0 8px 16px  hsl(var(--shadow-color) / 0.08),
-    0 24px 48px hsl(var(--shadow-color) / 0.10);
+  /* ---------- Depth ----------
+     App chrome is flat. These are for the two things that genuinely float. */
+  --shadow-sm: 0 1px 2px rgb(21 23 26 / 0.06);
+  --shadow-md: 0 2px 6px rgb(21 23 26 / 0.08), 0 8px 24px rgb(21 23 26 / 0.08);
+  --shadow-lg: 0 8px 32px rgb(21 23 26 / 0.16);
 
-  /* ---------- Motion ----------
-     One easing for everything that enters, three durations. Anything longer
-     than --dur-4 is a scene animation and lives with its component. */
-  --dur-2: 200ms;
-  --dur-3: 320ms;
-  --dur-4: 560ms;
-  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
-  --ease-inout: cubic-bezier(0.65, 0, 0.35, 1);
-  --t-colors:
-    color var(--dur-2) var(--ease-out),
-    background-color var(--dur-2) var(--ease-out),
-    border-color var(--dur-2) var(--ease-out);
-  --t-transform: transform var(--dur-2) var(--ease-out);
-  --t-shadow: box-shadow var(--dur-2) var(--ease-out);
+  /* ---------- Motion ---------- */
+  --dur: 150ms;
+  --dur-slow: 300ms;
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --t-colors: color var(--dur) var(--ease),
+    background-color var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
 
-/* ---------- Semantic roles: light ---------- */
+/* ---------- Roles: light ---------- */
 :root,
 :root[data-theme='light'] {
-  --bg-canvas:  var(--ink-0);
-  --bg-surface: var(--ink-0);
-  --bg-raised:  var(--ink-0);
-  --bg-sunken:  var(--ink-50);
-  --bg-muted:   var(--ink-100);
-  --bg-inverse: var(--ink-950);
-  --bg-scrim:   rgb(8 8 12 / 0.55);
+  --bg-app:     var(--grey-50);
+  --bg-surface: var(--white);
+  --bg-subtle:  var(--grey-100);
+  --bg-sidebar: var(--grey-50);
+  --bg-scrim:   rgb(21 23 26 / 0.4);
 
-  --fg-default:    var(--ink-900);
-  --fg-muted:      var(--ink-600);
-  --fg-subtle:     var(--ink-500);
-  --fg-on-inverse: var(--ink-50);
-  --fg-on-accent:  #fff;
-  --fg-link:       var(--fg-default);
+  --fg:        var(--grey-900);
+  --fg-muted:  var(--grey-700);
+  --fg-subtle: var(--grey-600);
+  --fg-on-dark: var(--white);
 
-  --line-subtle:  var(--ink-100);
-  --line-default: var(--ink-200);
-  --line-strong:  var(--ink-300);
+  --border:        var(--grey-200);
+  --border-strong: var(--grey-300);
 
-  --accent:         var(--signal-500);
-  --accent-hover:   var(--signal-500);
-  --accent-press:   var(--signal-500);
-  --accent-soft:    var(--ink-100);
-  --accent-soft-fg: var(--ink-900);
+  --accent:        var(--green-600);
+  --accent-hover:  var(--green-700);
+  --accent-fg:     var(--white);
+  --accent-subtle: var(--green-50);
+  --accent-on-subtle: var(--green-700);
 
-  --success-bg:   var(--mint-50);
-  --success-fg:   var(--mint-700);
-  --success-line: var(--mint-500);
-  --warning-bg:   var(--amber-50);
-  --warning-fg:   var(--amber-700);
-  --warning-line: var(--amber-400);
-  --danger-bg:    var(--rose-50);
-  --danger-fg:    var(--rose-700);
-  --danger-line:  var(--rose-500);
+  /* Primary actions are near-black, not accent-coloured. */
+  --action-bg:       var(--grey-900);
+  --action-bg-hover: var(--black);
+  --action-fg:       var(--white);
 
-  --focus-ring:   var(--accent);
-  --selection-bg: var(--ink-100);
-  --selection-fg: var(--ink-900);
-  --hover-wash:   rgb(8 8 12 / 0.035);
-  --pattern-ink:  rgb(8 8 12 / 0.06);
+  --success-bg: var(--green-50);
+  --success-fg: var(--green-700);
+  --success:    var(--green-500);
+  --warning-bg: var(--amber-50);
+  --warning-fg: var(--amber-700);
+  --warning:    var(--amber-500);
+  --danger-bg:  var(--red-50);
+  --danger-fg:  var(--red-700);
+  --danger:     var(--red-500);
+  --info-bg:    var(--blue-50);
+  --info-fg:    var(--blue-700);
+  --info:       var(--blue-500);
+
+  --focus: var(--accent);
+  --hover-wash: rgb(21 23 26 / 0.04);
+  --selection-bg: var(--green-100);
+  --selection-fg: var(--grey-900);
 }
 
-/* ---------- Semantic roles: dark ---------- */
+/* ---------- Roles: dark ----------
+   Declared once and applied to both the explicit attribute and the OS
+   preference, so a dark-OS visitor never sees a white flash. */
 :root[data-theme='dark'] {
-  --bg-canvas:  var(--ink-1000);
-  --bg-surface: var(--ink-950);
-  --bg-raised:  var(--ink-900);
-  --bg-sunken:  #0c0c12;
-  --bg-muted:   var(--ink-800);
-  --bg-inverse: var(--ink-50);
-  --bg-scrim:   rgb(0 0 0 / 0.68);
+  --bg-app:     #131417;
+  --bg-surface: #1b1d21;
+  --bg-subtle:  #24272c;
+  --bg-sidebar: #17181b;
+  --bg-scrim:   rgb(0 0 0 / 0.6);
 
-  --fg-default:    var(--ink-50);
-  --fg-muted:      var(--ink-400);
-  --fg-subtle:     var(--ink-500);
-  --fg-on-inverse: var(--ink-900);
-  --fg-on-accent:  #fff;
-  --fg-link:       var(--fg-default);
+  --fg:        #eceef0;
+  --fg-muted:  #a3abb4;
+  --fg-subtle: #7f8892;
+  --fg-on-dark: var(--white);
 
-  --line-subtle:  rgb(255 255 255 / 0.07);
-  --line-default: rgb(255 255 255 / 0.12);
-  --line-strong:  rgb(255 255 255 / 0.22);
+  --border:        #2c3036;
+  --border-strong: #3b4048;
 
-  --accent-soft:    rgb(255 255 255 / 0.08);
-  --accent-soft-fg: var(--ink-50);
+  --accent:        #3fa877;
+  --accent-hover:  #4fbd88;
+  --accent-fg:     #0b1a12;
+  --accent-subtle: rgb(63 168 119 / 0.16);
+  --accent-on-subtle: #7fcfa5;
 
-  --success-bg:   rgb(22 160 106 / 0.16);
-  --success-fg:   #6ee7ad;
-  --success-line: var(--mint-500);
-  --warning-bg:   rgb(217 163 58 / 0.16);
-  --warning-fg:   var(--amber-200);
-  --warning-line: var(--amber-400);
-  --danger-bg:    rgb(217 45 78 / 0.18);
-  --danger-fg:    #ff8fa5;
-  --danger-line:  var(--rose-500);
+  /* Inverted: on a dark canvas the "solid" action is light. */
+  --action-bg:       #eceef0;
+  --action-bg-hover: var(--white);
+  --action-fg:       #15171a;
 
-  --selection-bg: rgb(255 255 255 / 0.16);
-  --selection-fg: var(--ink-0);
-  --hover-wash:   rgb(255 255 255 / 0.05);
-  --pattern-ink:  rgb(255 255 255 / 0.07);
+  --success-bg: rgb(63 168 119 / 0.18);
+  --success-fg: #7fcfa5;
+  --success:    #3fa877;
+  --warning-bg: rgb(217 155 35 / 0.18);
+  --warning-fg: #e8bd6a;
+  --warning:    var(--amber-500);
+  --danger-bg:  rgb(217 72 59 / 0.2);
+  --danger-fg:  #f0968b;
+  --danger:     #d9483b;
+  --info-bg:    rgb(59 127 217 / 0.18);
+  --info-fg:    #8db6ee;
+  --info:       var(--blue-500);
 
-  --shadow-2:
-    0 1px 0 rgb(255 255 255 / 0.05) inset,
-    0 6px 16px rgb(0 0 0 / 0.55);
-  --shadow-4:
-    0 1px 0 rgb(255 255 255 / 0.07) inset,
-    0 24px 56px rgb(0 0 0 / 0.65);
+  --focus: #4fbd88;
+  --hover-wash: rgb(255 255 255 / 0.05);
+  --selection-bg: rgb(63 168 119 / 0.32);
+  --selection-fg: var(--white);
+
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-md: 0 2px 6px rgb(0 0 0 / 0.4), 0 8px 24px rgb(0 0 0 / 0.4);
+  --shadow-lg: 0 8px 32px rgb(0 0 0 / 0.6);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg-app:     #131417;
+    --bg-surface: #1b1d21;
+    --bg-subtle:  #24272c;
+    --bg-sidebar: #17181b;
+    --bg-scrim:   rgb(0 0 0 / 0.6);
+
+    --fg:        #eceef0;
+    --fg-muted:  #a3abb4;
+    --fg-subtle: #7f8892;
+
+    --border:        #2c3036;
+    --border-strong: #3b4048;
+
+    --accent:        #3fa877;
+    --accent-hover:  #4fbd88;
+    --accent-fg:     #0b1a12;
+    --accent-subtle: rgb(63 168 119 / 0.16);
+    --accent-on-subtle: #7fcfa5;
+
+    --action-bg:       #eceef0;
+    --action-bg-hover: var(--white);
+    --action-fg:       #15171a;
+
+    --success-bg: rgb(63 168 119 / 0.18);
+    --success-fg: #7fcfa5;
+    --success:    #3fa877;
+    --warning-bg: rgb(217 155 35 / 0.18);
+    --warning-fg: #e8bd6a;
+    --danger-bg:  rgb(217 72 59 / 0.2);
+    --danger-fg:  #f0968b;
+    --danger:     #d9483b;
+    --info-bg:    rgb(59 127 217 / 0.18);
+    --info-fg:    #8db6ee;
+
+    --focus: #4fbd88;
+    --hover-wash: rgb(255 255 255 / 0.05);
+    --selection-bg: rgb(63 168 119 / 0.32);
+    --selection-fg: var(--white);
+
+    --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+    --shadow-md: 0 2px 6px rgb(0 0 0 / 0.4), 0 8px 24px rgb(0 0 0 / 0.4);
+    --shadow-lg: 0 8px 32px rgb(0 0 0 / 0.6);
+  }
 }
 
 /* =============================================================================
-   Reset — only the parts that earn their place.
+   Reset
    ========================================================================== */
 
-*,
-*::before,
-*::after { box-sizing: border-box; }
-
+*, *::before, *::after { box-sizing: border-box; }
 * { margin: 0; }
 
 html {
   font-size: 100%;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: none;
-  scroll-behavior: smooth;
-  /* Anchors clear the sticky nav instead of hiding behind it. */
-  scroll-padding-top: calc(var(--nav-h) + var(--space-6));
   tab-size: 4;
+  color-scheme: light;
+  scroll-behavior: smooth;
+  /* Anchors clear the sticky header instead of hiding behind it. */
+  scroll-padding-top: calc(var(--nav-h) + var(--space-5));
+}
+:root[data-theme='dark'] { color-scheme: dark; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) { color-scheme: dark; }
 }
 
 body {
   min-height: 100svh;
-  background: var(--bg-canvas);
-  color: var(--fg-default);
-  font-family: var(--font-body-effective);
+  background: var(--bg-app);
+  color: var(--fg);
+  font-family: var(--font-ui);
   font-size: var(--text-base);
-  line-height: var(--leading-relaxed);
-  font-weight: var(--weight-regular);
-  font-feature-settings: 'kern' 1, 'liga' 1, 'calt' 1;
-  text-rendering: optimizeLegibility;
+  line-height: var(--leading-normal);
+  font-feature-settings: 'kern' 1, 'liga' 1, 'calt' 1, 'cv05' 1;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-wrap: break-word;
-  overflow-x: clip;
 }
 
-img, picture, video, canvas, svg, iframe {
-  display: block;
-  max-width: 100%;
-}
+img, picture, video, canvas, svg, iframe { display: block; max-width: 100%; }
 img, video { height: auto; }
 
-input, button, textarea, select {
-  font: inherit;
-  color: inherit;
-  letter-spacing: inherit;
-}
+input, button, textarea, select { font: inherit; color: inherit; }
 button { background: none; border: 0; padding: 0; cursor: pointer; }
-textarea { resize: vertical; min-height: 6rem; }
+textarea { resize: vertical; }
 
-a {
-  color: inherit;
+a { color: inherit; text-underline-offset: 0.15em; }
+
+/* Links inside running prose have to look like links. Scoped rather than
+   global so that nav items, cards and rows — which are links wrapping whole
+   blocks — stay unpainted. */
+:where(.figure-body, .faq, .prose, .page-sub, .field-hint, .sec-head p, .row-body, .panel-body > p, .side-note) a {
+  color: var(--accent);
+  text-decoration: underline;
   text-decoration-thickness: max(1px, 0.06em);
   text-underline-offset: 0.16em;
+  transition: var(--t-colors);
+}
+:where(.figure-body, .faq, .prose, .page-sub, .field-hint, .sec-head p, .row-body, .panel-body > p, .side-note) a:hover {
+  color: var(--accent-hover);
 }
 
 table { border-collapse: collapse; width: 100%; }
@@ -306,113 +327,206 @@ pre { overflow-x: auto; max-width: 100%; }
 summary { cursor: pointer; list-style: none; }
 summary::-webkit-details-marker { display: none; }
 
-p, li, dd, dt, figcaption, blockquote,
-h1, h2, h3, h4, h5, h6 { overflow-wrap: break-word; }
-
 h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-heading-effective);
-  font-weight: var(--weight-bold);
+  font-weight: var(--weight-semibold);
   line-height: var(--leading-tight);
-  letter-spacing: var(--tracking-tight);
+  letter-spacing: -0.011em;
+  /* Headings here are short and set large, where a one-word last line is very
+     visible; `balance` evens the lines out. Body copy gets `pretty`, which
+     only fixes the orphan and is far cheaper on long text. */
   text-wrap: balance;
 }
+p { text-wrap: pretty; }
+h1 { font-size: var(--text-3xl); letter-spacing: -0.022em; }
+h2 { font-size: var(--text-2xl); letter-spacing: -0.018em; }
+h3 { font-size: var(--text-lg); }
+h4, h5, h6 { font-size: var(--text-base); }
 
 ::selection { background: var(--selection-bg); color: var(--selection-fg); }
-* { scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
+* { scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
 
 :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
-  outline: var(--border-2) solid var(--focus-ring);
-  outline-offset: var(--border-2);
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
   border-radius: var(--radius-sm);
 }
 
 /* =============================================================================
-   Primitives — the three shapes the whole site is built from.
+   Primitives
    ========================================================================== */
 
-.container {
-  width: 100%;
-  max-width: calc(var(--w-site) + var(--gutter) * 2);
-  margin-inline: auto;
-  padding-inline: var(--gutter);
-}
-
-/* A button is a shape only. Color comes from globals.css, which paints the
-   bare .btn as primary and .btn.ghost as the quiet one. */
+/* ---------- Button ----------
+   Bare .btn is the neutral, bordered default — the one you reach for most in
+   an app. `.primary` is the near-black solid; `.subtle` is borderless. */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  height: var(--control-md);
-  padding-inline: var(--space-5);
-  border: var(--border-hair) solid transparent;
-  border-radius: var(--radius-control);
-  background: transparent;
-  color: var(--fg-default);
-  font-family: var(--font-body-effective);
-  font-size: var(--text-sm);
-  font-weight: var(--weight-semibold);
-  line-height: 1;
-  text-decoration: none;
-  white-space: nowrap;
-  cursor: pointer;
-  transition: var(--t-colors), var(--t-transform), var(--t-shadow);
-}
-.btn:active { transform: translateY(1px); }
-.btn.lg { height: var(--control-lg); padding-inline: var(--space-6); font-size: var(--text-md); }
-.btn.sm { height: var(--control-sm); padding-inline: var(--space-4); font-size: var(--text-xs); }
-.btn[disabled] { opacity: 0.45; pointer-events: none; }
-
-/* Block, not flex. The CDS made cards flex columns, which quietly stretched
-   any button dropped inside them to full width. */
-.card {
-  position: relative;
-  display: block;
+  height: var(--control-h);
+  padding-inline: var(--space-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
   background: var(--bg-surface);
-  border: var(--border-hair) solid var(--line-default);
-  border-radius: var(--radius-card);
-  transition: var(--t-colors), var(--t-transform), var(--t-shadow);
+  color: var(--fg);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  line-height: 1;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  transition: var(--t-colors);
 }
+.btn:hover { background: var(--bg-subtle); color: var(--fg); }
+.btn > svg { flex: none; }
 
-.chip {
+.btn.primary {
+  background: var(--action-bg);
+  border-color: var(--action-bg);
+  color: var(--action-fg);
+}
+.btn.primary:hover { background: var(--action-bg-hover); border-color: var(--action-bg-hover); }
+/* A press state — without it a click on a button that triggers no navigation
+   (Copy, the theme toggle) feels unacknowledged. */
+.btn:active { transform: translateY(1px); }
+@media (prefers-reduced-motion: reduce) { .btn:active { transform: none; } }
+
+.btn.subtle {
+  border-color: transparent;
+  background: transparent;
+  color: var(--fg-muted);
+}
+.btn.subtle:hover { background: var(--bg-subtle); color: var(--fg); }
+
+.btn.lg { height: var(--control-h-lg); padding-inline: var(--space-5); font-size: var(--text-base); }
+.btn.sm { height: 1.875rem; padding-inline: var(--space-3); font-size: var(--text-xs); }
+.btn[disabled] { opacity: 0.5; pointer-events: none; }
+
+/* ---------- Panel ----------
+   The workhorse container: a white card with a 1px border. Almost every
+   region of every page is one of these. */
+.panel {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--border);
+}
+.panel-head h2,
+.panel-head h3 {
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  margin: 0;
+}
+.panel-head p {
+  margin: 2px 0 0;
+  font-size: var(--text-sm);
+  color: var(--fg-subtle);
+}
+.panel-body { padding: var(--space-5); }
+.panel-body.flush { padding: 0; }
+
+/* ---------- Badge ---------- */
+.badge {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
-  height: var(--control-sm);
-  padding-inline: var(--space-3);
-  border: var(--border-hair) solid var(--line-default);
-  border-radius: var(--radius-pill);
-  background: var(--bg-surface);
+  gap: var(--space-1);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--bg-subtle);
   color: var(--fg-muted);
   font-size: var(--text-xs);
   font-weight: var(--weight-medium);
-  text-decoration: none;
-  cursor: pointer;
-  transition: var(--t-colors);
+  white-space: nowrap;
 }
-.chip:hover { border-color: var(--line-strong); color: var(--fg-default); }
+.badge.accent { background: var(--accent-subtle); color: var(--accent-on-subtle); }
+.badge.success { background: var(--success-bg); color: var(--success-fg); }
+.badge.warning { background: var(--warning-bg); color: var(--warning-fg); }
+.badge.danger { background: var(--danger-bg); color: var(--danger-fg); }
 
-/* Form controls share one resting state so nothing looks bolted on. */
-input:not([type='checkbox']):not([type='radio']),
+/* ---------- Form controls ----------
+   The :not() chain is wrapped in :where() so this reset contributes ZERO
+   specificity and any component rule can override it. Written bare it scores
+   (0,2,1) and silently outranks every single-class rule regardless of load
+   order. */
+input:where(:not([type='checkbox']):not([type='radio'])),
 select,
 textarea {
   width: 100%;
-  padding: var(--space-3) var(--space-4);
-  border: var(--border-hair) solid var(--line-default);
-  border-radius: var(--radius-control);
+  height: var(--control-h);
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
   background: var(--bg-surface);
-  color: var(--fg-default);
+  color: var(--fg);
   font-size: var(--text-sm);
-  transition: var(--t-colors);
+  transition: var(--t-colors), box-shadow var(--dur) var(--ease);
 }
-input:not([type='checkbox']):not([type='radio']):focus-visible,
-select:focus-visible,
-textarea:focus-visible { border-color: var(--accent); }
+textarea { height: auto; min-height: 4.5rem; padding: var(--space-2) var(--space-3); line-height: var(--leading-normal); }
+/* `appearance: none` strips the native arrow, so the control has to draw its
+   own or it reads as a plain text input with no affordance at all. The stroke
+   is a mid-grey that holds up on both the light and dark surface, which keeps
+   this to one rule instead of a per-theme pair. */
+select {
+  appearance: none;
+  padding-right: var(--space-6);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 4.75 6 7.75 9 4.75' fill='none' stroke='%237c8b9a' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--space-3) center;
+}
+input:where(:not([type='checkbox']):not([type='radio'])):focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-subtle);
+}
 ::placeholder { color: var(--fg-subtle); opacity: 1; }
 
+.field { display: block; margin-bottom: var(--space-4); }
+.field:last-child { margin-bottom: 0; }
+.field > label,
+.label {
+  display: block;
+  margin-bottom: var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--fg);
+}
+.field-hint {
+  margin-top: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--fg-subtle);
+}
+
+/* The first tab stop on any page: jumps past the header into the content.
+   Off-screen until focused. */
+.skip-link {
+  position: absolute;
+  left: var(--space-3);
+  top: var(--space-3);
+  z-index: 100;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius);
+  background: var(--action-bg);
+  color: var(--action-fg);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  text-decoration: none;
+  transform: translateY(-200%);
+}
+.skip-link:focus-visible { transform: none; }
+
+.muted { color: var(--fg-muted); }
+.mono { font-family: var(--font-mono); }
+
 @media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
   *, *::before, *::after {
     animation-duration: 1ms !important;
     animation-iteration-count: 1 !important;
@@ -423,6 +537,5 @@ textarea:focus-visible { border-color: var(--accent); }
 
 @media print {
   body { background: #fff; color: #000; }
-  h1, h2, h3 { break-after: avoid; }
-  img, figure, table { break-inside: avoid; }
+  .site-nav, .site-footer { display: none !important; }
 }
