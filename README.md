@@ -18,7 +18,7 @@ Paste one line of code, and join a public roll of humans who still write by hand
 [![Next.js](https://img.shields.io/badge/Next.js-14-000000?logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Postgres](https://img.shields.io/badge/Postgres-Neon-336791?logo=postgresql&logoColor=white)](https://neon.tech/)
-[![Deploy to Vercel](https://img.shields.io/badge/Deploy-Vercel-000000?logo=vercel)](https://vercel.com/new)
+[![Deploy on Cloudflare](https://img.shields.io/badge/Deploy-Cloudflare_Workers-F38020?logo=cloudflare&logoColor=white)](https://workers.cloudflare.com/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-157A45.svg)](#-contributing)
 
 <br/>
@@ -94,12 +94,12 @@ npm run dev               # → http://localhost:3000
 | `NEXT_PUBLIC_SITE_URL` | — | Your public URL, for SEO (canonical, sitemap, Open Graph, JSON‑LD). |
 | `ANTHROPIC_API_KEY` | — | Only for the optional `/check` second opinion. Get one at [console.anthropic.com](https://console.anthropic.com). |
 
-### 3. Deploy to Vercel (free)
+### 3. Deploy to Cloudflare Workers (free)
 
-1. Push to GitHub → import the repo at [vercel.com](https://vercel.com/new).
-2. Add a **Postgres** database (Vercel Storage, or a Neon string).
-3. Set the env vars above in **Project → Settings → Environment Variables**.
-4. **Deploy.** Your stamp is served from `https://your-domain/widget.js`.
+1. Create a Postgres database at [neon.tech](https://neon.tech) — tables are auto‑created on first use.
+2. Set the secrets: `wrangler secret put DATABASE_URL` and `wrangler secret put ADMIN_TOKEN` (and `ANTHROPIC_API_KEY` if you want `/check`).
+3. Put `NEXT_PUBLIC_SITE_URL` in `.env`/`.dev.vars` — it's inlined at build time, not a secret.
+4. **Deploy:** `npm run cf:deploy` (builds with OpenNext, then `wrangler deploy`). Attach your domain via a Worker Route or Custom Domain in `wrangler.jsonc`.
 
 ---
 
@@ -249,7 +249,7 @@ of people.
 [![React](https://img.shields.io/badge/React_18-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript_5-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Neon Postgres](https://img.shields.io/badge/Neon_Postgres-00E599?style=for-the-badge&logo=postgresql&logoColor=black)](https://neon.tech/)
-[![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com/)
+[![Cloudflare Workers](https://img.shields.io/badge/Cloudflare_Workers-F38020?style=for-the-badge&logo=cloudflare&logoColor=white)](https://workers.cloudflare.com/)
 [![CSS](https://img.shields.io/badge/Zero_dependency_CSS-157A45?style=for-the-badge&logo=css3&logoColor=white)](#-design)
 
 </div>
@@ -263,7 +263,7 @@ of people.
 | **Geist · Geist Mono** | One voice for everything; the mono keeps the "typed by a human" texture |
 | **Vanilla JS widget** | `public/widget.js` — inline SVG, zero dependencies, ~21 KB |
 | **Web Speech API** | The story player narrates itself — no service, no API key |
-| **Vercel** | Hosting + deploys |
+| **Cloudflare Workers** (via `@opennextjs/cloudflare`) | Hosting + deploys |
 
 ---
 

@@ -1,8 +1,9 @@
 import { neon, type NeonQueryFunction } from "@neondatabase/serverless";
 
-// `neon()` is an HTTP-based, serverless-friendly Postgres client — ideal for Vercel
-// functions. It's created lazily on first query so an unset DATABASE_URL doesn't
-// crash the build; it only errors when an API route actually runs a query.
+// `neon()` is an HTTP-based, serverless-friendly Postgres client — ideal for
+// Cloudflare Workers, which can't hold a TCP connection open. It's created
+// lazily on first query so an unset DATABASE_URL doesn't crash the build; it
+// only errors when an API route actually runs a query.
 let _sql: NeonQueryFunction<false, false> | null = null;
 
 export const sql: NeonQueryFunction<false, false> = ((...args: any[]) => {

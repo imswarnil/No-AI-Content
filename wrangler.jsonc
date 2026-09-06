@@ -15,7 +15,14 @@
 
   "observability": {
     "enabled": true
-  }
+  },
+
+  // A Worker Route (not a Custom Domain) — it attaches to whatever DNS record
+  // already exists for the hostname as long as it's proxied through
+  // Cloudflare, so it doesn't need to own/manage the DNS record itself.
+  "routes": [
+    { "pattern": "nac.imswarnil.com/*", "zone_name": "imswarnil.com" }
+  ]
 
   // Secrets (DATABASE_URL, ADMIN_TOKEN, ANTHROPIC_API_KEY) are NOT set here —
   // they are uploaded with `wrangler secret put NAME` so they never enter the
