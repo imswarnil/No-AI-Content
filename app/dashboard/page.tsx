@@ -64,7 +64,7 @@ export default function Dashboard() {
 
       <div className="card">
         <label>Admin token</label>
-        <div className="check-box">
+        <div className="input-row">
           <input
             type="password"
             value={token}

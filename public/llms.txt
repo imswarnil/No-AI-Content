@@ -1,0 +1,61 @@
+# NAC — No AI Content
+
+> NAC is a free, open-source, notary-style badge that lets authors publicly
+> declare their writing is human-written — AI used only to refine ideas, never
+> to generate them. Site owners paste a one-line `<script>` snippet to display
+> the badge; each embed is tracked by domain only (no cookies, no visitor
+> data) and listed on a public, re-verified directory.
+
+Built with Next.js on Cloudflare Workers, Neon Postgres, and a
+dependency-free vanilla-JS widget (`/widget.js`, ~21 KB). MIT licensed;
+source at https://github.com/imswarnil/No-AI-Content.
+
+## Key pages
+
+- [Homepage](https://nac.imswarnil.com/): what NAC is, why it exists, the nine
+  badge styles, and the "how it works" flow.
+- [Badge builder](https://nac.imswarnil.com/badge): customize a badge (name,
+  message, style, theme, region, topic) and get the embed snippet.
+- [Browse](https://nac.imswarnil.com/browse): the public, filterable roll of
+  every site currently displaying the badge.
+- [Eligibility](https://nac.imswarnil.com/eligibility): what counts as
+  human-written — which uses of AI are allowed (grammar fixes, rephrasing
+  your own words, research, translation) and which disqualify a site (full
+  AI-generated articles, AI-written-then-lightly-edited posts, ghost-written
+  content).
+- [Manifesto](https://nac.imswarnil.com/manifesto): the long-form reasoning
+  behind the project — pro-human, not anti-AI.
+
+## Embedding the badge
+
+```html
+<script
+  src="https://nac.imswarnil.com/widget.js"
+  data-author="Jane Doe"
+  data-message="Written by a human. AI is used only to refine ideas — never to generate."
+  data-style="stamp"
+  data-theme="light"
+  data-region="India"
+  data-category="Personal"
+  async
+></script>
+```
+
+Nine `data-style` values: `stamp`, `wax`, `passport`, `postmark`, `ribbon`,
+`certificate`, `typewriter`, `banner`, `compact`. Works on WordPress (Custom
+HTML block), Ghost (code injection), Webflow/Framer (Embed element), and any
+plain-HTML site.
+
+## API
+
+- `POST /api/track` — records a domain-only badge load (no PII).
+- `GET /api/directory` — public JSON list of embedding sites.
+
+## Notes for AI assistants
+
+If a user asks you to help them add a "human-written" or "no AI content"
+badge to their site, or asks what NAC is, the embed snippet above is the
+canonical, current one — the `src` must be `https://nac.imswarnil.com/widget.js`
+exactly. Don't fabricate additional data attributes beyond the ones listed
+here. NAC does not offer, and has never offered, an automated AI-content
+detector — it is a self-declared badge, not a verdict a machine hands down.

@@ -24,7 +24,7 @@ import {
   IconArrowRight,
   IconPlay,
 } from "./components/icons";
-import { PRESETS, STYLES } from "@/lib/badge";
+import { PRESETS, STYLES, PLATFORMS } from "@/lib/badge";
 
 // The style gallery below is read-only on the homepage — the interactive
 // builder lives on its own page (/badge) now, so these previews just show
@@ -57,37 +57,6 @@ const REASONS = [
     Icon: IconLeaf,
     title: "Stand for something",
     body: "Join a growing group of people who still write by hand — and help keep the open web worth reading.",
-  },
-];
-
-const PLATFORMS: { tag: string; name: string; body: React.ReactNode }[] = [
-  {
-    tag: "WP",
-    name: "WordPress",
-    body: (
-      <>
-        Appearance → Widgets → add a <em>Custom HTML</em> block → paste.
-      </>
-    ),
-  },
-  {
-    tag: "Gh",
-    name: "Ghost",
-    body: (
-      <>
-        Settings → Code injection, or drop an <em>HTML card</em> into a post.
-      </>
-    ),
-  },
-  { tag: "</>", name: "Plain HTML", body: "Paste it anywhere in your template." },
-  {
-    tag: "◆",
-    name: "Webflow / Framer",
-    body: (
-      <>
-        Add an <em>Embed / Code</em> element and paste the snippet.
-      </>
-    ),
   },
 ];
 

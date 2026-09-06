@@ -31,3 +31,34 @@ export const STYLES: { key: Style; name: string; blurb: string }[] = [
 export function escapeAttr(s: string) {
   return s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
 }
+
+export const PLATFORMS: { tag: string; name: string; body: React.ReactNode }[] = [
+  {
+    tag: "WP",
+    name: "WordPress",
+    body: (
+      <>
+        Appearance → Widgets → add a <em>Custom HTML</em> block → paste.
+      </>
+    ),
+  },
+  {
+    tag: "Gh",
+    name: "Ghost",
+    body: (
+      <>
+        Settings → Code injection, or drop an <em>HTML card</em> into a post.
+      </>
+    ),
+  },
+  { tag: "</>", name: "Plain HTML", body: "Paste it anywhere in your template." },
+  {
+    tag: "◆",
+    name: "Webflow / Framer",
+    body: (
+      <>
+        Add an <em>Embed / Code</em> element and paste the snippet.
+      </>
+    ),
+  },
+];

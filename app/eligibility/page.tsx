@@ -1,5 +1,16 @@
 import Link from "next/link";
-import { IconScale, IconCheck, IconX } from "../components/icons";
+import {
+  IconScale,
+  IconCheck,
+  IconX,
+  IconFeather,
+  IconSearch,
+  IconGlobe,
+  IconFileText,
+  IconRobot,
+  IconAlert,
+  IconCopy,
+} from "../components/icons";
 
 export const metadata = {
   title: "Who qualifies — No AI Content",
@@ -7,21 +18,21 @@ export const metadata = {
 };
 
 const ALLOWED = [
-  ["Spelling & grammar", "Fixing typos and grammar in text you wrote."],
-  ["Rephrasing your own words", "Asking AI to tighten a sentence you already drafted."],
-  ["Pressure-testing ideas", "Debating or stress-testing your thinking — you still write it."],
-  ["Research assistance", "Summarizing sources you then read and verify yourself."],
-  ["Translating your writing", "Translating text you authored into another language."],
-  ["Outlining help", "Sketching structure, as long as you write the actual prose."],
-];
+  [IconCheck, "Spelling & grammar", "Fixing typos and grammar in text you wrote."],
+  [IconFeather, "Rephrasing your own words", "Asking AI to tighten a sentence you already drafted."],
+  [IconScale, "Pressure-testing ideas", "Debating or stress-testing your thinking — you still write it."],
+  [IconSearch, "Research assistance", "Summarizing sources you then read and verify yourself."],
+  [IconGlobe, "Translating your writing", "Translating text you authored into another language."],
+  [IconFileText, "Outlining help", "Sketching structure, as long as you write the actual prose."],
+] as const;
 
 const NOT_ALLOWED = [
-  ["Full articles from a prompt", "Generating whole posts end-to-end from a topic."],
-  ["AI writes, you lightly edit", "The words are the machine's; you just tweaked them."],
-  ["Auto-generated SEO / listicles", "Bulk content spun up to rank, not to say something."],
-  ["Ghost-written by AI", "Published as yours, but a model actually wrote it."],
-  ["No human idea behind it", "The thinking, not just the typing, came from AI."],
-];
+  [IconRobot, "Full articles from a prompt", "Generating whole posts end-to-end from a topic."],
+  [IconAlert, "AI writes, you lightly edit", "The words are the machine's; you just tweaked them."],
+  [IconCopy, "Auto-generated SEO / listicles", "Bulk content spun up to rank, not to say something."],
+  [IconRobot, "Ghost-written by AI", "Published as yours, but a model actually wrote it."],
+  [IconAlert, "No human idea behind it", "The thinking, not just the typing, came from AI."],
+] as const;
 
 export default function Eligibility() {
   return (
@@ -46,10 +57,15 @@ export default function Eligibility() {
               <IconCheck size={17} /> Allowed — you still qualify
             </h2>
             <ul>
-              {ALLOWED.map(([t, d]) => (
+              {ALLOWED.map(([Icon, t, d]) => (
                 <li key={t}>
-                  <strong>{t}</strong>
-                  <span>{d}</span>
+                  <span className="elig-icon">
+                    <Icon size={15} />
+                  </span>
+                  <span className="elig-li-body">
+                    <strong>{t}</strong>
+                    <span>{d}</span>
+                  </span>
                 </li>
               ))}
             </ul>
@@ -59,10 +75,15 @@ export default function Eligibility() {
               <IconX size={17} /> Not allowed — disqualifies
             </h2>
             <ul>
-              {NOT_ALLOWED.map(([t, d]) => (
+              {NOT_ALLOWED.map(([Icon, t, d]) => (
                 <li key={t}>
-                  <strong>{t}</strong>
-                  <span>{d}</span>
+                  <span className="elig-icon">
+                    <Icon size={15} />
+                  </span>
+                  <span className="elig-li-body">
+                    <strong>{t}</strong>
+                    <span>{d}</span>
+                  </span>
                 </li>
               ))}
             </ul>
