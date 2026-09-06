@@ -405,6 +405,12 @@
     container.appendChild(cta);
   }
 
+  // The script tag can be gone by the time this runs — a live preview (the
+  // homepage gallery, the badge builder) rebuilds its host on every keystroke,
+  // which detaches the in-flight <script> before its load finishes. That
+  // instance is stale by definition, so bail out quietly instead of throwing
+  // on a null parentNode; a real embed's script tag is never removed like this.
+  if (!script.parentNode) return;
   script.parentNode.insertBefore(container, script.nextSibling);
 
   /* ---------------- Tracking ping (domain-only, no PII) ----------------

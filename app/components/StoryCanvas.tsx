@@ -724,7 +724,7 @@ export default function StoryCanvas({ open, onClose }: { open: boolean; onClose:
           aria-label="Scrub the animation"
         />
         {done ? (
-          <a className="scribe-cta" href="/#build" onClick={onClose}>
+          <a className="scribe-cta" href="/badge" onClick={onClose}>
             Get the badge
           </a>
         ) : (

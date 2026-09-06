@@ -79,7 +79,7 @@ export default function Eligibility() {
               </p>
             </div>
             <div className="page-actions">
-              <Link className="btn primary" href="/#build">
+              <Link className="btn primary" href="/badge">
                 I qualify — make my badge
               </Link>
             </div>

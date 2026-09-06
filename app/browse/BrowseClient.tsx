@@ -251,7 +251,7 @@ export default function BrowseClient({
           <p className="sec-sub" style={{ textAlign: "left" }}>
             {sites.length === 0 ? (
               <>
-                No sites yet. <Link href="/#build">Create your stamp</Link> and you&apos;ll appear
+                No sites yet. <Link href="/badge">Create your stamp</Link> and you&apos;ll appear
                 here.
               </>
             ) : (

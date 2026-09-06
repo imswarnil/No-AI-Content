@@ -93,7 +93,7 @@ export default function SiteHeader() {
           >
             <IconGithub size={17} />
           </a>
-          <Link className="btn primary nav-cta" href="/#build">
+          <Link className="btn primary nav-cta" href="/badge">
             Get the badge
           </Link>
           <button

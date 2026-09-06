@@ -93,7 +93,7 @@ export default function Manifesto() {
               <Link className="btn" href="/browse">
                 See who&apos;s in
               </Link>
-              <Link className="btn primary" href="/#build">
+              <Link className="btn primary" href="/badge">
                 Create a badge
               </Link>
             </div>

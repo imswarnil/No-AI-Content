@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Share from "./components/Share";
 import StoryCanvas from "./components/StoryCanvas";
 import Pulse from "./components/Pulse";
+import WidgetPreview from "./components/WidgetPreview";
 import { useRevealOnScroll } from "./components/reveal";
 import {
   SceneWritten,
@@ -20,41 +21,17 @@ import {
   IconCompass,
   IconLeaf,
   IconScale,
-  IconCheck,
   IconArrowRight,
   IconPlay,
 } from "./components/icons";
-import { CATEGORIES, REGIONS } from "@/lib/taxonomy";
+import { PRESETS, STYLES } from "@/lib/badge";
 
-type Style =
-  | "stamp"
-  | "wax"
-  | "passport"
-  | "postmark"
-  | "ribbon"
-  | "certificate"
-  | "typewriter"
-  | "banner"
-  | "compact";
-
-const PRESETS = [
-  "Written by a human. AI is used only to refine ideas — never to generate.",
-  "100% human-written. No AI-generated text.",
-  "The words are mine. AI helps me edit, not write.",
-  "Human-first writing. AI assists — the human decides.",
-];
-
-const STYLES: { key: Style; name: string; blurb: string }[] = [
-  { key: "stamp", name: "Notary stamp", blurb: "The signature seal — for sidebars" },
-  { key: "wax", name: "Wax seal", blurb: "Pressed in molten ink" },
-  { key: "passport", name: "Passport visa", blurb: "Admitted to the open web" },
-  { key: "postmark", name: "Postmark", blurb: "Hand-delivered writing" },
-  { key: "ribbon", name: "Prize ribbon", blurb: "100% human, award-style" },
-  { key: "certificate", name: "Certificate", blurb: "Serial-numbered declaration" },
-  { key: "typewriter", name: "Typewriter byline", blurb: "A quiet mono signature" },
-  { key: "banner", name: "Banner", blurb: "Best for footers / about pages" },
-  { key: "compact", name: "Compact pill", blurb: "Best for inline / bylines" },
-];
+// The style gallery below is read-only on the homepage — the interactive
+// builder lives on its own page (/badge) now, so these previews just show
+// the default message rather than tracking form state.
+const GALLERY_AUTHOR = "";
+const GALLERY_MESSAGE = PRESETS[0];
+const GALLERY_THEME = "light";
 
 const STEPS = [
   { title: "Customize your seal", body: "Pick a style, add your name, region and topic." },
@@ -150,33 +127,13 @@ const FAQ: { q: string; a: React.ReactNode }[] = [
 export default function Home() {
   useRevealOnScroll();
 
-  const [author, setAuthor] = useState("");
-  const [message, setMessage] = useState(PRESETS[0]);
-  const [theme, setTheme] = useState<"light" | "dark">("light");
-  const [style, setStyle] = useState<Style>("stamp");
-  const [region, setRegion] = useState("");
-  const [category, setCategory] = useState("");
   const [origin, setOrigin] = useState("");
-  const [copied, setCopied] = useState(false);
   const [storyOpen, setStoryOpen] = useState(false);
 
+  // Feeds the read-only style gallery below — widget.js is loaded from the
+  // origin the page is actually viewed on, so local development previews
+  // against the local copy.
   useEffect(() => setOrigin(window.location.origin), []);
-
-  /* The snippet people copy must point at the PUBLIC instance, never at
-     whatever origin the builder happens to be open on. Using
-     window.location.origin meant a snippet built while viewing localhost (or a
-     Vercel preview) shipped as
-     `src="http://localhost:3000/widget.js"` — on a real site that script never
-     loads, so no badge renders, no tracking ping fires, and the site never
-     appears on the roll. That is exactly the "I added it and nothing shows up"
-     failure, and it is silent: the builder's own preview looks perfect,
-     because locally that URL resolves.
-
-     The live preview below still uses `origin`, so local development of
-     widget.js keeps working against the local copy. */
-  const publicOrigin = (
-    process.env.NEXT_PUBLIC_SITE_URL || origin || "https://nac.imswarnil.com"
-  ).replace(/\/+$/, "");
 
   // Any badge on the page — including the nine in the style gallery — asks the
   // host to explain itself through a cancelable event. Calling preventDefault
@@ -193,28 +150,6 @@ export default function Home() {
     return () => window.removeEventListener("nac:explain", onExplain);
   }, []);
 
-  const embedCode = useMemo(() => {
-    const attrs = [
-      `src="${publicOrigin}/widget.js"`,
-      author ? `data-author="${escapeAttr(author)}"` : "",
-      `data-message="${escapeAttr(message)}"`,
-      `data-style="${style}"`,
-      `data-theme="${theme}"`,
-      region ? `data-region="${escapeAttr(region)}"` : "",
-      category ? `data-category="${escapeAttr(category)}"` : "",
-      "async",
-    ]
-      .filter(Boolean)
-      .join("\n  ");
-    return `<script\n  ${attrs}\n></script>`;
-  }, [publicOrigin, author, message, style, theme, region, category]);
-
-  async function copy() {
-    await navigator.clipboard.writeText(embedCode);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1600);
-  }
-
   return (
     <>
       {/* ---------- HERO ---------- */}
@@ -230,9 +165,9 @@ export default function Home() {
               by a machine. One line of code tells your readers the ideas and the words are yours.
             </p>
             <div className="hero-cta">
-              <a className="btn primary lg" href="#build">
+              <Link className="btn primary lg" href="/badge">
                 Create your badge
-              </a>
+              </Link>
               <button className="btn lg" onClick={() => setStoryOpen(true)}>
                 <IconPlay size={15} /> Watch the story
               </button>
@@ -382,7 +317,10 @@ export default function Home() {
         <div className="sec-head reveal">
           <span className="eyebrow">The badge</span>
           <h2>Nine styles, one honest signal.</h2>
-          <p>Pick whichever fits where your words live. All of them are customizable.</p>
+          <p>
+            Pick whichever fits where your words live — all customizable on the{" "}
+            <Link href="/badge">badge builder</Link>.
+          </p>
         </div>
         <div className="panel reveal">
           <div className="panel-body flush">
@@ -393,167 +331,17 @@ export default function Home() {
                     <WidgetPreview
                       origin={origin}
                       style={s.key}
-                      theme={theme}
-                      author={author}
-                      message={message}
+                      theme={GALLERY_THEME}
+                      author={GALLERY_AUTHOR}
+                      message={GALLERY_MESSAGE}
                     />
                   </div>
-                  <div className="gallery-meta">
+                  <Link className="gallery-meta" href={`/badge?style=${s.key}`}>
                     <strong>{s.name}</strong>
                     <span>{s.blurb}</span>
-                  </div>
+                  </Link>
                 </div>
               ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ---------- BUILDER ---------- */}
-      <section className="section sunken" id="build">
-        <div className="container">
-          <div className="sec-head reveal">
-            <span className="eyebrow">Make yours</span>
-            <h2>Build your badge.</h2>
-            <p>Nothing is stored until you paste the snippet on your own site.</p>
-          </div>
-
-          <div className="builder reveal">
-            <div className="panel">
-              <div className="panel-body">
-                <div className="field">
-                  <label htmlFor="nac-author">Your name or brand</label>
-                  <input
-                    id="nac-author"
-                    value={author}
-                    onChange={(e) => setAuthor(e.target.value)}
-                    placeholder="Jane Doe"
-                  />
-                  <p className="field-hint">Optional — shown on the badge itself.</p>
-                </div>
-
-                <div className="field">
-                  <label htmlFor="nac-preset">What it says</label>
-                  <select
-                    id="nac-preset"
-                    value={PRESETS.includes(message) ? message : "__custom"}
-                    onChange={(e) => e.target.value !== "__custom" && setMessage(e.target.value)}
-                  >
-                    {PRESETS.map((p) => (
-                      <option key={p} value={p}>
-                        {p}
-                      </option>
-                    ))}
-                    <option value="__custom">Custom…</option>
-                  </select>
-                  <textarea
-                    rows={2}
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    aria-label="Badge message"
-                    style={{ marginTop: "var(--space-2)" }}
-                  />
-                </div>
-
-                <div className="row">
-                  <div className="field">
-                    <label htmlFor="nac-style">Style</label>
-                    <select id="nac-style" value={style} onChange={(e) => setStyle(e.target.value as Style)}>
-                      {STYLES.map((s) => (
-                        <option key={s.key} value={s.key}>
-                          {s.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="field">
-                    <label htmlFor="nac-badge-theme">Badge theme</label>
-                    <select
-                      id="nac-badge-theme"
-                      value={theme}
-                      onChange={(e) => setTheme(e.target.value as "light" | "dark")}
-                    >
-                      <option value="light">Light</option>
-                      <option value="dark">Dark</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="row">
-                  <div className="field">
-                    <label htmlFor="nac-region">Country or region</label>
-                    <input
-                      id="nac-region"
-                      value={region}
-                      onChange={(e) => setRegion(e.target.value)}
-                      placeholder="e.g. India"
-                      list="nac-regions"
-                    />
-                    <datalist id="nac-regions">
-                      {REGIONS.map((r) => (
-                        <option key={r} value={r} />
-                      ))}
-                    </datalist>
-                  </div>
-                  <div className="field">
-                    <label htmlFor="nac-category">Topic</label>
-                    <input
-                      id="nac-category"
-                      value={category}
-                      onChange={(e) => setCategory(e.target.value)}
-                      placeholder="e.g. Tech, Travel, Personal"
-                      list="nac-categories"
-                    />
-                    <datalist id="nac-categories">
-                      {CATEGORIES.map((c) => (
-                        <option key={c} value={c} />
-                      ))}
-                    </datalist>
-                  </div>
-                </div>
-                <p className="field-hint">
-                  Region and topic become filters on the <Link href="/browse">Browse page</Link> so
-                  readers can find you.
-                </p>
-              </div>
-            </div>
-
-            <div className="stack">
-              <div className="panel">
-                <div className="panel-head">
-                  <h3>Live preview</h3>
-                  <span className="badge accent">This is the real embed</span>
-                </div>
-                <div className="panel-body">
-                  <div className={`preview-stage ${theme}`}>
-                    <WidgetPreview
-                      origin={origin}
-                      style={style}
-                      theme={theme}
-                      author={author}
-                      message={message}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="panel">
-                <div className="panel-head">
-                  <h3>Your snippet</h3>
-                  <button className="btn primary sm" onClick={copy}>
-                    {copied ? (
-                      <>
-                        <IconCheck size={13} /> Copied
-                      </>
-                    ) : (
-                      "Copy"
-                    )}
-                  </button>
-                </div>
-                <div className="panel-body">
-                  <pre>{embedCode}</pre>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -679,38 +467,4 @@ export default function Home() {
       <StoryCanvas open={storyOpen} onClose={() => setStoryOpen(false)} />
     </>
   );
-}
-
-/** Renders the real widget.js into an isolated node for preview. */
-function WidgetPreview({
-  origin,
-  style,
-  theme,
-  author,
-  message,
-}: {
-  origin: string;
-  style: Style;
-  theme: string;
-  author: string;
-  message: string;
-}) {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const host = ref.current;
-    if (!host || !origin) return;
-    host.innerHTML = "";
-    const s = document.createElement("script");
-    s.src = `${origin}/widget.js`;
-    if (author) s.setAttribute("data-author", author);
-    s.setAttribute("data-message", message);
-    s.setAttribute("data-style", style);
-    s.setAttribute("data-theme", theme);
-    host.appendChild(s);
-  }, [origin, style, theme, author, message]);
-  return <div ref={ref} className="widget-host" />;
-}
-
-function escapeAttr(s: string) {
-  return s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
 }

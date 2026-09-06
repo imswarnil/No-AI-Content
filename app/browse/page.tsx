@@ -85,7 +85,7 @@ export default async function Browse({
             </p>
           </div>
           <div className="page-actions">
-            <Link className="btn primary" href="/#build">
+            <Link className="btn primary" href="/badge">
               Add your site
             </Link>
           </div>
