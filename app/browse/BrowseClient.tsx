@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { CATEGORIES, REGIONS } from "@/lib/taxonomy";
 import {
@@ -13,7 +13,11 @@ import {
   IconX,
   IconArrowRight,
   IconChevron,
+  IconGrid,
+  IconList,
 } from "../components/icons";
+
+type View = "grid" | "list";
 
 export type DirSite = {
   domain: string;
@@ -110,6 +114,22 @@ export default function BrowseClient({
   const [q, setQ] = useState(initialQuery);
   const [cats, setCats] = useState<Set<string>>(() => parseList(initialCategories));
   const [regs, setRegs] = useState<Set<string>>(() => parseList(initialRegions));
+
+  // Remembered per-browser, not per-account — a light convenience, not state
+  // that needs to survive anywhere but this device.
+  const [view, setView] = useState<View>("grid");
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("nac_browse_view");
+      if (saved === "grid" || saved === "list") setView(saved);
+    } catch {}
+  }, []);
+  function changeView(v: View) {
+    setView(v);
+    try {
+      localStorage.setItem("nac_browse_view", v);
+    } catch {}
+  }
 
   // Show the whole taxonomy, sorted by how many sites actually use it. Empty
   // categories stay listed (dimmed) rather than vanishing — a sidebar that
@@ -243,9 +263,29 @@ export default function BrowseClient({
       </aside>
 
       <div className="dir-main">
-        <p className="dir-count muted" role="status">
-          {filtered.length} of {sites.length} site{sites.length === 1 ? "" : "s"}
-        </p>
+        <div className="dir-toolbar">
+          <p className="dir-count muted" role="status">
+            {filtered.length} of {sites.length} site{sites.length === 1 ? "" : "s"}
+          </p>
+          <div className="view-toggle" role="group" aria-label="Layout">
+            <button
+              type="button"
+              className={view === "grid" ? "on" : undefined}
+              aria-pressed={view === "grid"}
+              onClick={() => changeView("grid")}
+            >
+              <IconGrid size={15} /> Grid
+            </button>
+            <button
+              type="button"
+              className={view === "list" ? "on" : undefined}
+              aria-pressed={view === "list"}
+              onClick={() => changeView("list")}
+            >
+              <IconList size={15} /> List
+            </button>
+          </div>
+        </div>
 
         {filtered.length === 0 ? (
           <p className="sec-sub" style={{ textAlign: "left" }}>
@@ -264,22 +304,28 @@ export default function BrowseClient({
             )}
           </p>
         ) : (
-          <div className="dir-grid">
-            {filtered.map((s) => (
+          <div className={`dir-grid ${view === "grid" ? "is-grid" : "is-list"}`}>
+            {filtered.map((s, i) => (
               <a
                 key={s.domain}
                 className="dir-card"
                 href={`https://${s.domain}`}
                 target="_blank"
                 rel="noopener noreferrer"
+                style={{ animationDelay: `${Math.min(i, 20) * 30}ms` }}
               >
                 <img
                   className="dir-favi"
-                  src={`https://www.google.com/s2/favicons?domain=${s.domain}&sz=64`}
+                  src={`https://www.google.com/s2/favicons?domain=${s.domain}&sz=128`}
                   alt=""
-                  width={32}
-                  height={32}
+                  width={48}
+                  height={48}
                   loading="lazy"
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src =
+                      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M2.4 9h19.2'/%3E%3Cpath d='M2.4 15h19.2'/%3E%3Cpath d='M12 2a15.5 15.5 0 0 1 0 20'/%3E%3Cpath d='M12 2a15.5 15.5 0 0 0 0 20'/%3E%3C/svg%3E";
+                  }}
                 />
                 <span className="dir-meta">
                   <strong>{s.title || s.domain}</strong>

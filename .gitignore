@@ -16,3 +16,6 @@ next-env.d.ts
 # .env, in the format wrangler expects. Never commit.
 .dev.vars
 cloudflare-env.d.ts
+
+# Scratch notes, not project content.
+zzzz.md

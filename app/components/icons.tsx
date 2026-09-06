@@ -241,6 +241,26 @@ export const IconChevron = (p: IconProps) => (
   </Stroke>
 );
 
+export const IconGrid = (p: IconProps) => (
+  <Stroke {...p}>
+    <rect x="3" y="3" width="7.5" height="7.5" rx="1.5" />
+    <rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5" />
+    <rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5" />
+    <rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5" />
+  </Stroke>
+);
+
+export const IconList = (p: IconProps) => (
+  <Stroke {...p}>
+    <path d="M3 6h.01" />
+    <path d="M3 12h.01" />
+    <path d="M3 18h.01" />
+    <path d="M8 6h13" />
+    <path d="M8 12h13" />
+    <path d="M8 18h13" />
+  </Stroke>
+);
+
 export const IconSun = (p: IconProps) => (
   <Stroke {...p}>
     <circle cx="12" cy="12" r="4.2" />
