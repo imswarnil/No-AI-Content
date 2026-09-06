@@ -15,7 +15,6 @@ const COLUMNS: { title: string; links: { href: string; label: string; external?:
     title: "Use it",
     links: [
       { href: "/#build", label: "Create your badge" },
-      { href: "/check", label: "Verify your writing" },
       { href: "/browse", label: "Browse the roll" },
     ],
   },

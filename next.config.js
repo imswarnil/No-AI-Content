@@ -2,11 +2,11 @@
 const nextConfig = {
   reactStrictMode: true,
   async redirects() {
-    // People search "ai content detector", "ai checker" etc. — catch the
-    // obvious URL guesses and land them on the detector.
-    const aliases = ["/detector", "/ai-content-detector", "/ai-detector", "/ai-checker", "/detect"];
+    // People search "ai content detector", "ai checker" etc. — land them on
+    // the homepage, which explains what NAC actually is.
+    const aliases = ["/detector", "/ai-content-detector", "/ai-detector", "/ai-checker", "/detect", "/check"];
     return [
-      ...aliases.map((source) => ({ source, destination: "/check", permanent: true })),
+      ...aliases.map((source) => ({ source, destination: "/", permanent: true })),
       // The directory is now "Browse" — keep old links working.
       { source: "/directory", destination: "/browse", permanent: true },
     ];

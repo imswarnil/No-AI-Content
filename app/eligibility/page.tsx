@@ -79,9 +79,6 @@ export default function Eligibility() {
               </p>
             </div>
             <div className="page-actions">
-              <Link className="btn" href="/check">
-                Verify my site first
-              </Link>
               <Link className="btn primary" href="/#build">
                 I qualify — make my badge
               </Link>

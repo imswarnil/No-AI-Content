@@ -24,8 +24,8 @@
     { "pattern": "nac.imswarnil.com/*", "zone_name": "imswarnil.com" }
   ]
 
-  // Secrets (DATABASE_URL, ADMIN_TOKEN, ANTHROPIC_API_KEY) are NOT set here —
-  // they are uploaded with `wrangler secret put NAME` so they never enter the
-  // repository. NEXT_PUBLIC_SITE_URL is different: it is inlined at build time,
-  // so it belongs in the build environment, not in a secret.
+  // Secrets (DATABASE_URL, ADMIN_TOKEN) are NOT set here — they are uploaded
+  // with `wrangler secret put NAME` so they never enter the repository.
+  // NEXT_PUBLIC_SITE_URL is different: it is inlined at build time, so it
+  // belongs in the build environment, not in a secret.
 }

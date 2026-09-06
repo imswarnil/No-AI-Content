@@ -20,7 +20,6 @@ import {
   IconCompass,
   IconLeaf,
   IconScale,
-  IconSearch,
   IconCheck,
   IconArrowRight,
   IconPlay,
@@ -58,11 +57,6 @@ const STYLES: { key: Style; name: string; blurb: string }[] = [
 ];
 
 const STEPS = [
-  {
-    title: "Verify your writing",
-    body: "Run a page through the open detector — see how human it reads before you claim the stamp.",
-    href: "/check",
-  },
   { title: "Customize your seal", body: "Pick a style, add your name, region and topic." },
   { title: "Copy one line of code", body: "Paste the snippet into your sidebar, footer, or byline." },
   {
@@ -139,8 +133,7 @@ const FAQ: { q: string; a: React.ReactNode }[] = [
     a: (
       <>
         Honestly, no tool can — AI detectors routinely mislabel real human writing. The stamp is a{" "}
-        <em>declaration</em> you choose to make. The optional <Link href="/check">verification
-        layer</Link> gives constructive feedback to help you improve, not a verdict.
+        <em>declaration</em> you choose to make, not a verdict a machine hands down.
       </>
     ),
   },
@@ -576,28 +569,15 @@ export default function Home() {
           <div className="panel">
             <div className="panel-body flush">
               <div className="rows">
-                {STEPS.map((s, i) =>
-                  s.href ? (
-                    <Link className="row-item linked" href={s.href} key={s.title}>
-                      <span className="row-num">{i + 1}</span>
-                      <span className="row-body">
-                        <strong>{s.title}</strong>
-                        <span className="muted">{s.body}</span>
-                      </span>
-                      <span className="row-arrow">
-                        <IconArrowRight size={14} />
-                      </span>
-                    </Link>
-                  ) : (
-                    <div className="row-item" key={s.title}>
-                      <span className="row-num">{i + 1}</span>
-                      <span className="row-body">
-                        <strong>{s.title}</strong>
-                        <span className="muted">{s.body}</span>
-                      </span>
-                    </div>
-                  ),
-                )}
+                {STEPS.map((s, i) => (
+                  <div className="row-item" key={s.title}>
+                    <span className="row-num">{i + 1}</span>
+                    <span className="row-body">
+                      <strong>{s.title}</strong>
+                      <span className="muted">{s.body}</span>
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -622,7 +602,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ---------- RULES / VERIFY ---------- */}
+      {/* ---------- RULES / BROWSE ---------- */}
       <section className="section container tight">
         <div className="two-cta reveal">
           <Link className="cta-card" href="/eligibility">
@@ -635,14 +615,14 @@ export default function Home() {
               whole posts).
             </span>
           </Link>
-          <Link className="cta-card" href="/check">
+          <Link className="cta-card" href="/browse">
             <span className="cta-emoji">
-              <IconSearch size={20} />
+              <IconCompass size={20} />
             </span>
-            <strong>Verify my writing</strong>
+            <strong>Browse the roll</strong>
             <span className="muted">
-              A transparent AI-likeness score with third-party cross-checks — feedback, not a
-              verdict.
+              Every site that&apos;s claimed the stamp — a public, re-verified directory of
+              human-written work.
             </span>
           </Link>
         </div>

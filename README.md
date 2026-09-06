@@ -29,6 +29,23 @@ Paste one line of code, and join a public roll of humans who still write by hand
 
 ---
 
+## 📸 Screenshots
+
+<div align="center">
+<table>
+<tr>
+<td width="50%"><img src="docs/screenshots/homepage-light.jpg" alt="Homepage, light theme" /><br/><sub align="center">Homepage — light</sub></td>
+<td width="50%"><img src="docs/screenshots/homepage-dark.jpg" alt="Homepage, dark theme" /><br/><sub>Homepage — dark</sub></td>
+</tr>
+<tr>
+<td width="50%"><img src="docs/screenshots/badge-styles.jpg" alt="The nine badge styles" /><br/><sub>Nine badge styles, live preview</sub></td>
+<td width="50%"><img src="docs/screenshots/browse.jpg" alt="Browse page" /><br/><sub>/browse — the public roll</sub></td>
+</tr>
+</table>
+</div>
+
+---
+
 ## ✨ Why
 
 > I miss the old web — blogs where a human actually thought and wrote. Using AI to sharpen a
@@ -92,14 +109,13 @@ npm run dev               # → http://localhost:3000
 | `DATABASE_URL` | ✅ | Postgres connection string. Free at [neon.tech](https://neon.tech). Tables are auto‑created. |
 | `ADMIN_TOKEN` | ✅ | A long random secret. Gates the `/dashboard` usage view. |
 | `NEXT_PUBLIC_SITE_URL` | — | Your public URL, for SEO (canonical, sitemap, Open Graph, JSON‑LD). |
-| `ANTHROPIC_API_KEY` | — | Only for the optional `/check` second opinion. Get one at [console.anthropic.com](https://console.anthropic.com). |
 
 ### 3. Deploy to Cloudflare Workers (free)
 
 1. Create a Postgres database at [neon.tech](https://neon.tech) — tables are auto‑created on first use.
-2. Set the secrets: `wrangler secret put DATABASE_URL` and `wrangler secret put ADMIN_TOKEN` (and `ANTHROPIC_API_KEY` if you want `/check`).
+2. Set the secrets: `wrangler secret put DATABASE_URL` and `wrangler secret put ADMIN_TOKEN`.
 3. Put `NEXT_PUBLIC_SITE_URL` in `.env`/`.dev.vars` — it's inlined at build time, not a secret.
-4. **Deploy:** `npm run cf:deploy` (builds with OpenNext, then `wrangler deploy`). Attach your domain via a Worker Route or Custom Domain in `wrangler.jsonc`.
+4. **Deploy:** `npm run cf:deploy` (builds with OpenNext, then `wrangler deploy`). Attach your domain via a Worker Route or Custom Domain in `wrangler.jsonc`. Push to `main` and Cloudflare Workers Builds redeploys automatically.
 
 ---
 
@@ -171,36 +187,6 @@ The rule of thumb: **if a reader deleted the AI's contribution, your post should
 
 ---
 
-## 🔍 The detector — our own engine
-
-**`/check`** is a free **AI content detector** built from scratch (`lib/detect.ts`) — no
-third‑party API needed. Paste text or a URL and it returns a **transparent, signal‑based
-AI‑likeness score (0–100)** with every signal, weight and flagged phrase shown:
-
-| Signal | What it measures |
-| --- | --- |
-| AI cliché phrases | "in today's fast‑paced world", "let's dive in", … |
-| LLM‑favored vocabulary | "delve", "tapestry", "leverage", "seamless", … |
-| Formal transitions | "moreover", "furthermore", "consequently", … |
-| Sentence‑length burstiness | Humans vary rhythm; LLMs write uniformly |
-| Personal voice & specifics | First person, concrete numbers |
-| Contractions | Humans write "don't"; formal AI expands it |
-| Filler / intensifiers | "very", "crucial", "comprehensive", … |
-| Em‑dashes & semicolons | The famous LLM "—" habit |
-| Sentence‑opener variety | "The… The… This… This…" reads templated |
-
-Everything is tunable data — the weights and word lists live at the top of `lib/detect.ts`.
-The exact **flagged phrases** are listed so writers know what to rewrite, an optional
-**second opinion** (Claude API) gives qualitative feedback, and the page links out to
-independent detectors so you can watch them disagree. Handy URLs like `/detector`,
-`/ai-content-detector` and `/ai-checker` all redirect to it.
-
-> ⚠️ **Honest by design:** reliable AI‑content detection is not possible — detectors routinely
-> mislabel real human writing. `/check` gives **qualitative guidance to help you improve**, never a
-> verdict on you as a person.
-
----
-
 ## 🗺️ Pages & API
 
 | Route | What it does |
@@ -209,16 +195,12 @@ independent detectors so you can watch them disagree. Handy URLs like `/detector
 | `/browse` | Public roll of human‑written sites — sidebar checkbox filters (category/region with counts), instant search, rich cards (favicon, fetched title & description). **Listings are live‑verified**: a site appears only while the widget is actually found on its homepage (re‑checked daily) or its badge pinged in the last 7 days — remove the widget and the listing disappears. |
 | `/manifesto` | The long‑form "why this exists". |
 | `/eligibility` | The allowed / not‑allowed checklist. |
-| `/check` | The AI content detector (own engine) + optional second opinion. |
-| `/detector` | SEO alias → redirects to `/check` (also `/ai-content-detector`, `/ai-checker`). |
 | `/directory` | Permanent 301 → `/browse` (the page's old URL; old links still work). |
 | `/dashboard` | Private operator view (token‑gated): domains, loads, activity. |
 | `POST /api/track` | Records a domain‑only badge load (no cookies, no visitor data). |
-| `POST /api/detect` | Runs the in‑house detection engine on text or a URL. |
 | `POST /api/pulse` | The honest counters — page visits and the one‑question poll. |
 | `GET /api/directory` | Public list of embedding sites. |
 | `GET /api/sites` | Admin list (token‑gated). |
-| `POST /api/analyze` | Runs the optional human‑ness review. |
 
 ---
 
@@ -227,11 +209,10 @@ independent detectors so you can watch them disagree. Handy URLs like `/detector
 ```mermaid
 flowchart LR
     A["Author's site<br/>&lt;script widget.js&gt;"] -->|renders| B["Notary stamp<br/>+ nac:explain event"]
-    A -->|"POST /api/track<br/>(domain only)"| C["Next.js API"]
-    C --> D[("Postgres<br/>sites + metrics")]
+    A -->|"POST /api/track<br/>(domain only)"| C["Next.js on<br/>Cloudflare Workers"]
+    C --> D[("Neon Postgres<br/>sites + metrics")]
     E["Operator /dashboard"] -->|"token"| C
     F["Readers /browse"] --> C
-    G["/check"] -->|"fetch page → review"| H["Claude API"]
 ```
 
 **Privacy model:** only the embedding **domain + timestamp + count** is stored. No IPs, no
@@ -258,7 +239,6 @@ of people.
 | --- | --- |
 | **Next.js 14** (App Router) + **React 18** + **TypeScript** | The site, the builder, and every API route |
 | **Neon Postgres** (`@neondatabase/serverless`) | The `sites` and `metrics` tables — serverless‑friendly, no connection pool to babysit |
-| **Claude API** (`@anthropic-ai/sdk`) | The optional `/check` second opinion — constructive feedback, never a verdict |
 | **Hand-rolled CSS** (`app/base.css`) | Tokens, type, motion, dark mode — no framework, no runtime, no build step |
 | **Geist · Geist Mono** | One voice for everything; the mono keeps the "typed by a human" texture |
 | **Vanilla JS widget** | `public/widget.js` — inline SVG, zero dependencies, ~21 KB |
@@ -311,15 +291,13 @@ app/
   browse/               # public roll (search + region/category filters)
   manifesto/            # the long-form why
   eligibility/          # the rules checklist
-  check/                # AI content detector UI (+ FAQ JSON-LD for SEO)
   dashboard/            # operator analytics
-  api/{track,sites,directory,detect,analyze,pulse}/route.ts
+  api/{track,sites,directory,pulse}/route.ts
   layout.tsx            # SEO metadata + JSON-LD + fonts
   base.css              # tokens, reset, primitives — the foundation
   nac-theme.css         # "Ink & Seal" — token overrides only
   globals.css           # NAC components — semantic tokens only
   icon.svg              # favicon (the seal)
-lib/detect.ts           # the in-house AI-likeness engine (tunable signals)
 lib/db.ts               # Neon Postgres + schema
 public/widget.js        # the embeddable stamp (self-contained)
 docs/                   # README assets

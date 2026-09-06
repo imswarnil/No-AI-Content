@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { IconSun, IconMoon, IconGithub, IconX } from "./icons";
+import { IconSun, IconMoon, IconGithub, IconX, IconFeather, IconCompass, IconScale } from "./icons";
 
 /** The seal mark, inline so it stays crisp and follows the accent token. */
 export function SealMark({ size = 28 }: { size?: number }) {
@@ -35,10 +35,9 @@ export function SealMark({ size = 28 }: { size?: number }) {
 export const REPO = "https://github.com/imswarnil/No-AI-Content";
 
 const LINKS = [
-  { href: "/manifesto", label: "Manifesto" },
-  { href: "/browse", label: "Browse" },
-  { href: "/eligibility", label: "Rules" },
-  { href: "/check", label: "Verify" },
+  { href: "/manifesto", label: "Manifesto", Icon: IconFeather },
+  { href: "/browse", label: "Browse", Icon: IconCompass },
+  { href: "/eligibility", label: "Rules", Icon: IconScale },
 ];
 
 export default function SiteHeader() {
@@ -67,7 +66,7 @@ export default function SiteHeader() {
         </Link>
 
         <nav className="nav-links" aria-label="Primary">
-          {LINKS.map(({ href, label }) => {
+          {LINKS.map(({ href, label, Icon }) => {
             const active = pathname === href || pathname.startsWith(href + "/");
             return (
               <Link
@@ -76,6 +75,7 @@ export default function SiteHeader() {
                 className={active ? "on" : undefined}
                 aria-current={active ? "page" : undefined}
               >
+                <Icon size={15} />
                 {label}
               </Link>
             );
